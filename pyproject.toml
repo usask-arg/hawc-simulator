@@ -33,7 +33,6 @@ conda-pypi-map = {"usask-arg-nightly" = "local_mapping.json"}
 hawcsimulator = { path = ".", editable = true }
 showlib = { path = "../show-lib", editable = true }
 skretrieval = { path = "../skretrieval", editable = true }
-ali-processing = { path = "../ali-processing", editable = true }
 
 [tool.pixi.dependencies]
 numpy = "*"
