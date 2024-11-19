@@ -33,6 +33,7 @@ conda-pypi-map = {"usask-arg-nightly" = "local_mapping.json"}
 hawcsimulator = { path = ".", editable = true }
 showlib = { path = "../show-lib", editable = true }
 skretrieval = { path = "../skretrieval", editable = true }
+hitran-api = "*"
 
 [tool.pixi.dependencies]
 numpy = "*"
