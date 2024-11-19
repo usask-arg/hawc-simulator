@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import warnings
+
 import hawcsimulator.steps as sim_steps
 from hawcsimulator.steps import Step
 
@@ -15,6 +17,8 @@ class Simulator:
         pass
 
     def run(self, cfg: dict, data: dict | None = None) -> dict:
+        warnings.filterwarnings("ignore")
+
         if data is None:
             data = {}
 

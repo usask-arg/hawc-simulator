@@ -7,7 +7,7 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 from __future__ import annotations
 
-project = 'hawc_simulator'
+project = 'hawcsimulator'
 copyright = '2024, USask-ARG'
 author = 'USask-ARG'
 github_url = 'https://github.com/usask-arg/hawc-simulator'

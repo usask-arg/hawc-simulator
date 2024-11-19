@@ -169,3 +169,5 @@ src/hawcsimulator/_version.py
 pixi.lock
 *.code-workspace
 local_scripts
+
+*.DS_Store*

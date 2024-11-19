@@ -5,9 +5,9 @@ build:
   tools:
     python: "mambaforge-22.9"
 
-  jobs:
-    pre_build:
-      - pip install .
+  commands:
+    - mamba install -c conda-forge -c nodefaults pixi
+    - pixi run readthedocs
 
 sphinx:
    configuration: docs/source/conf.py

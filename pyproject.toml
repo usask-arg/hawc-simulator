@@ -31,10 +31,9 @@ conda-pypi-map = {"usask-arg-nightly" = "local_mapping.json"}
 
 [tool.pixi.pypi-dependencies]
 hawcsimulator = { path = ".", editable = true }
-showlib = { path = "../show-lib", editable = true }
-skretrieval = { path = "../skretrieval", editable = true }
 hitran-api = "*"
 
+# Run dependencies
 [tool.pixi.dependencies]
 numpy = "*"
 sasktran2 = {version=">=2024.11.0", channel="conda-forge"}
@@ -45,18 +44,41 @@ netcdf4 = "*"
 appdirs = "*"
 jupyter = "*"
 matplotlib = "*"
-pytest = ">=8.3.3,<9"
 ruff = "*"
-sphinx = "*"
 myst-nb = "*"
 setuptools_scm = "*"
 pre-commit = "*"
+
+# Dev dependencies
+[tool.pixi.feature.dev]
+dependencies = {ruff = "*", setuptools_scm = "*", pre-commit = "*"}
+pypi-dependencies = {showlib = { path = "../show-lib", editable = true }, skretrieval = { path = "../skretrieval", editable = true }}
+
+
+
+# Test dependencies
+[tool.pixi.feature.test.dependencies]
+pytest = ">=8.3.3,<9"
+
+# Doc dependencies
+[tool.pixi.feature.docs]
+dependencies = {sphinx = "*"}
+pypi-dependencies = {sphinx_book_theme = "*", sphinx_design = "*"}
+
+[tool.pixi.feature.nightly]
+dependencies = {skretrieval = {"channel" = "usask-arg-nightly", "version" = "*"}, showlib = {"channel" = "usask-arg-nightly", "version" = "*"}}
+
+
+[tool.pixi.environments]
+default = ["nightly", "test", "docs"]
+dev = ["dev", "test", "docs"]
 
 [tool.pixi.tasks]
 show-tutorial = { cmd = "jupyter notebook", cwd = "notebooks/show/tutorial" }
 test = { cmd = "pytest tests/", cwd = "." }
 pre-commit = { cmd = "pre-commit run -a", cwd = "." }
 docs = { cmd = "sphinx-build -b html docs/source docs/build", cwd = "." }
+readthedocs = { cmd = "rm -rf $READTHEDOCS_OUTPUT/html && cp -r docs/_build/html $READTHEDOCS_OUTPUT/html", depends_on = ["docs"] }
 
 [tool.setuptools_scm]
 write_to = "src/hawcsimulator/_version.py"
