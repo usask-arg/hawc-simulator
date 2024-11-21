@@ -166,7 +166,6 @@ cython_debug/
 # Versioning
 src/hawcsimulator/_version.py
 
-pixi.lock
 *.code-workspace
 local_scripts/
 
