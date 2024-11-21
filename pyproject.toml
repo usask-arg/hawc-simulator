@@ -39,6 +39,7 @@ numpy = "*"
 sasktran2 = {version=">=2024.11.0", channel="conda-forge"}
 astropy = "*"
 numba = "*"
+pip = "*"
 xarray = "*"
 netcdf4 = "*"
 appdirs = "*"
@@ -52,7 +53,7 @@ pre-commit = "*"
 # Dev dependencies
 [tool.pixi.feature.dev]
 dependencies = {ruff = "*", setuptools_scm = "*", pre-commit = "*"}
-pypi-dependencies = {showlib = { path = "../show-lib", editable = true }, skretrieval = { path = "../skretrieval", editable = true }}
+pypi-dependencies = {showlib = { git = "https://github.com/usask-arg/show-lib.git" }, skretrieval = { git = "https://github.com/usask-arg/skretrieval.git", editable = true }}
 
 
 
@@ -79,6 +80,9 @@ test = { cmd = "pytest tests/", cwd = "." }
 pre-commit = { cmd = "pre-commit run -a", cwd = "." }
 docs = { cmd = "sphinx-build -b html docs/source docs/build", cwd = "." }
 readthedocs = { cmd = "rm -rf $READTHEDOCS_OUTPUT/html && cp -r docs/_build/html $READTHEDOCS_OUTPUT/html", depends_on = ["docs"] }
+
+dev-install-showlib = { cmd = "pip install --no-deps -e  ../show-lib", cwd = "."}
+dev-install-skretrieval = { cmd = "pip install --no-deps -e ../skretrieval", cwd = "." }
 
 [tool.setuptools_scm]
 write_to = "src/hawcsimulator/_version.py"
