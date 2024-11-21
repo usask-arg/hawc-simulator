@@ -21,7 +21,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "windows-latest", "macos-latest"]
-        environment: [py310, py311, py312, py313]
+        environment: [py310, py311, py312]
 
     steps:
       - name: Checkout repository

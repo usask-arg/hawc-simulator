@@ -25,7 +25,7 @@ this in your preferred IDE see the [pixi documentation](https://pixi.sh/latest/)
 The `hawc-simulator` package closely depends upon several companion packages, these are,
 
 - `skretrieval`: The core retrieval algorithms used for L1b->L2 processing
-- `showlib`: SHOW instrument specific algorithms 
+- `showlib`: SHOW instrument specific algorithms
 - `ali-processing`: ALI instrument specific algorithms
 - `sasktran2`: The code radiative transfer model
 

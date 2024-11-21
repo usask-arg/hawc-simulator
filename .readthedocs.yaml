@@ -8,7 +8,7 @@ build:
   commands:
     - mamba install -c conda-forge -c nodefaults pixi
     - pixi install -e default
-    - pixi run -e default readthedocs 
+    - pixi run -e default readthedocs
 
 sphinx:
    configuration: docs/source/conf.py
