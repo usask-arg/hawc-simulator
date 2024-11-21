@@ -6,11 +6,10 @@ build:
     python: "mambaforge-22.9"
 
   commands:
-    - mamba install -c conda-forge -c nodefaults pixi
     - pixi run readthedocs
 
 sphinx:
    configuration: docs/source/conf.py
 
 conda:
-  environment: env.yml
+  environment: ci/conda-envs/readthedocs.yml
