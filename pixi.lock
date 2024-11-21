@@ -8412,9 +8412,9 @@ packages:
   timestamp: 1721186240105
 - kind: pypi
   name: hawcsimulator
-  version: 0.1.dev13+gaf92f8a.d20241121
+  version: 0.1.dev16+g10b1d11.d20241121
   path: .
-  sha256: dd6f3bcb466674e97f74c61d3dd5954875632aa2b4f811a2d8b76a4710bcd181
+  sha256: 3c75069df2c1c7a1cc86d9c7f3f9a7f869398ee10c92b1eb2f84b7607101cca3
   requires_dist:
   - numpy
   - sasktran2
