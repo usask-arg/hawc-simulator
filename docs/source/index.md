@@ -24,6 +24,7 @@ changelog
 :caption: The SHOW Simulator
 
 show/introduction.md
+show/quickstart.md
 ```
 
 ```{toctree}
@@ -32,6 +33,7 @@ show/introduction.md
 :caption: The ALI Simulator
 
 ali/introduction.md
+ali/quickstart.md
 ```
 
 ```{toctree}

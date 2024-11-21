@@ -26,6 +26,7 @@ requirements:
     - python
     - numpy
     - sasktran2
+    - showlib
 
 test:
   imports:

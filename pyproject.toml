@@ -53,9 +53,6 @@ pre-commit = "*"
 # Dev dependencies
 [tool.pixi.feature.dev]
 dependencies = {ruff = "*", setuptools_scm = "*", pre-commit = "*"}
-pypi-dependencies = {showlib = { git = "https://github.com/usask-arg/show-lib.git" }, skretrieval = { git = "https://github.com/usask-arg/skretrieval.git", editable = true }}
-
-
 
 # Test dependencies
 [tool.pixi.feature.test.dependencies]
@@ -69,10 +66,21 @@ pypi-dependencies = {sphinx_book_theme = "*", sphinx_design = "*"}
 [tool.pixi.feature.nightly]
 dependencies = {skretrieval = {"channel" = "usask-arg-nightly", "version" = "*"}, showlib = {"channel" = "usask-arg-nightly", "version" = "*"}}
 
+[tool.pixi.feature.py310.dependencies]
+python = "3.10.*"
+[tool.pixi.feature.py311.dependencies]
+python = "3.11.*"
+[tool.pixi.feature.py312.dependencies]
+python = "3.12.*"
+[tool.pixi.feature.py313.dependencies]
+python = "3.13.*"
 
 [tool.pixi.environments]
 default = ["nightly", "test", "docs"]
-dev = ["dev", "test", "docs"]
+py310 = ["py310"]
+py311 = ["py311"]
+py312 = ["py312"]
+py313 = ["py313"]
 
 [tool.pixi.tasks]
 show-tutorial = { cmd = "jupyter notebook", cwd = "notebooks/show/tutorial" }
@@ -83,6 +91,8 @@ readthedocs = { cmd = "rm -rf $READTHEDOCS_OUTPUT/html && cp -r docs/build/ $REA
 
 dev-install-showlib = { cmd = "pip install --no-deps -e  ../show-lib", cwd = "."}
 dev-install-skretrieval = { cmd = "pip install --no-deps -e ../skretrieval", cwd = "." }
+dev-install-aliprocessing = { cmd = "pip install --no-deps -e ../ali-processing", cwd = "." }
+dev-install-sasktran2 = { cmd = "pip install --no-deps -e ../sasktran2", cwd = "." }
 
 [tool.setuptools_scm]
 write_to = "src/hawcsimulator/_version.py"
