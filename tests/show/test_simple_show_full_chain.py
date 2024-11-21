@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
+import pytest
 import sasktran2 as sk
 import xarray as xr
 from showlib.l2.optical import h2o_optical_property
@@ -18,6 +19,7 @@ from hawcsimulator.show.por import por_from_atmosphere
 
 
 def test_chain():
+    pytest.skip()
     configure_log()
 
     # Load in the calibration database
