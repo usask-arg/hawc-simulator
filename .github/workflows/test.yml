@@ -7,6 +7,8 @@ on:
       - main
   pull_request:
     types: [ opened, reopened, synchronize, labeled ]
+  schedule:
+    - cron: '0 0 * * *'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -21,7 +23,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "windows-latest", "macos-latest"]
-        environment: [py310, py311, py312]
+        environment: [py311, py312]
 
     steps:
       - name: Checkout repository
@@ -39,23 +41,3 @@ jobs:
         shell: bash -el {0}
         run: |
           pixi r test
-
-  test-conda-build:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-          submodules: true
-
-      - name: Setup Conda build environment
-        uses: mamba-org/setup-micromamba@v1
-        with:
-          environment-file: ci/conda-envs/mamba-build.yml
-
-      - name: Build Conda package
-        shell: bash -el {0}
-        run: |
-          conda mambabuild conda.recipe --output-folder pkgs/ -c usask-arg-nightly
