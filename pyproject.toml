@@ -7,7 +7,7 @@ name = "hawcsimulator"
 dynamic = ["version"]
 description="HAWCsat simulator package"
 readme = "README.md"
-dependencies = ['numpy', 'sasktran2', 'netcdf4', 'appdirs', 'showlib', 'aliprocessing', 'skretrieval']
+dependencies = ['numpy', 'sasktran2', 'netcdf4', 'appdirs','numba>0.55']
 authors = [
     { name = "Daniel Zawada", email = "daniel.zawada@usask.ca" },
 ]
@@ -25,16 +25,38 @@ test = ["pytest"]
 
 [tool.pixi.project]
 channels = ["conda-forge"]
-platforms = ["linux-64", "linux-aarch64", "linux-ppc64le", "osx-64", "osx-arm64", "win-64"]
+platforms = ["osx-arm64"]
 
 [tool.pixi.pypi-dependencies]
 hawcsimulator = { path = ".", editable = true }
+skretrieval = { path = "../skretrieval", editable = true }
+showlib = { path = "../show-lib", editable = true }
+aliprocessing = { path = "../ali-processing", editable = true }
 hitran-api = "*"
+
+[tool.uv.sources]
+skretrieval = { path = "../skretrieval", editable = true }
+showlib = { path = "../show-lib", editable = true }
+aliprocessing = { path = "../ali-processing", editable = true }
+
+[dependency-groups]
+dev = [
+    "sphinx",
+    "myst-nb",
+    "sphinx_book_theme",
+    "sphinx_design",
+    "pre-commit",
+    "pytest",
+    "ruff",
+    "matplotlib",
+    "jupyter",
+]
+
 
 # Run dependencies
 [tool.pixi.dependencies]
 numpy = "*"
-sasktran2 = {version=">=2024.11.0"}
+sasktran2 = {version=">2024.11.0"}
 astropy = "*"
 numba = "*"
 pip = "*"

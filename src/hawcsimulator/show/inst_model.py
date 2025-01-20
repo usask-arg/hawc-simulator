@@ -41,7 +41,7 @@ class L1bGeneratorILS(L1bGenerator, SpectrometerMixin):
             self._noise_model = lambda rad: rad * 0.01
 
     def run(self, fer: xr.Dataset):
-        result = self._inst_model["measurement"].model_radiance(fer, None)
+        result = self._inst_model["measurement"].model_radiance(fer, None)["I"]
 
         num_los = len(result.data["tangent_altitude"].to_numpy())
 

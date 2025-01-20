@@ -23,6 +23,10 @@ class Simulator:
             data = {}
 
         data = self._initialize_data(data)
+
+        for k, v in cfg.get("data", {}).items():
+            data[k] = v
+
         for step_name in cfg["steps"]:
             step_cfg = cfg.get(step_name, {})
             step = next(
