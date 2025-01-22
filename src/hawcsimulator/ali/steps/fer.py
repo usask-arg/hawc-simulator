@@ -19,19 +19,19 @@ class GenerateFER(Step):
         # Engine properties
         fer_gen.sk_config.num_stokes = 3
         fer_gen.sk_config.stokes_basis = sk.StokesBasis.Observer
-        fer_gen.sk_config.multiple_scatter_source = sk.MultipleScatterSource.DiscreteOrdinates
+        fer_gen.sk_config.multiple_scatter_source = (
+            sk.MultipleScatterSource.DiscreteOrdinates
+        )
         fer_gen.sk_config.num_streams = 8
+        fer_gen.sk_config.input_validation_mode = sk.InputValidationMode.Disabled
 
         for k, v in cfg.get("model_kwargs", {}).items():
             setattr(fer_gen.sk_config, k, v)
 
-
         atmosphere = sk.Atmosphere(
             model_geometry=fer_gen.model_geo,
             config=fer_gen.sk_config,
-            **cfg.get(
-                "spectral_grid", {"wavelengths_nm": data["sample_wavelengths"]}
-            ),
+            **cfg.get("spectral_grid", {"wavelengths_nm": data["sample_wavelengths"]}),
             calculate_derivatives=False,
         )
 

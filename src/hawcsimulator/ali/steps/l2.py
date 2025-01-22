@@ -6,7 +6,7 @@ from hawcsimulator.steps import Step
 
 
 class ALIL1bToL2(Step):
-    def _run(self, data: dict, cfg: dict) -> dict:  # noqa: ARG002
+    def _run(self, data: dict, cfg: dict) -> dict:
         data["l2"] = process_l1b_to_l2_image(
             data["l1b"], data["por"].isel(time=0), data["calibration_database"], **cfg
         )

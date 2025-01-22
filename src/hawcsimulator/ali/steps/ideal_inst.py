@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from hawcsimulator.ali.inst_model import L1bGeneratorILS, L1bGeneratorIdeal
+from hawcsimulator.ali.inst_model import L1bGeneratorIdeal
 from hawcsimulator.steps import Step
 
 
@@ -17,8 +17,13 @@ class IdealALIModelL1b(Step):
 
     """
 
-    def _run(self, data: dict, cfg: dict) -> dict:  # noqa: ARG002
-        l1b_gen = L1bGeneratorIdeal(data["calibration_database"], data["observation"], pol_states=data["polarization_states"], **cfg)
+    def _run(self, data: dict, cfg: dict) -> dict:
+        l1b_gen = L1bGeneratorIdeal(
+            data["calibration_database"],
+            data["observation"],
+            pol_states=data["polarization_states"],
+            **cfg,
+        )
         data["l1b"] = l1b_gen.run(data["fer"])
 
         return data

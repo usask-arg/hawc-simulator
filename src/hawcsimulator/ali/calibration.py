@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from collections.abc import Callable
 from pathlib import Path
 
 import appdirs
@@ -14,6 +13,7 @@ def _generate_ideal_spectrograph_cal_db():
     res.coords["sample_wavelengths"] = np.arange(400, 800, 1)
 
     return res
+
 
 def _generate_ideal_spex_cal_db():
     return xr.Dataset()
@@ -36,7 +36,6 @@ def calibration_database(name: str = "ideal", version: str = "v1"):
         if name == "ideal_spectrograph":
             cal_db = _generate_ideal_spectrograph_cal_db()
 
-
             file.parent.mkdir(parents=True, exist_ok=True)
             cal_db.to_netcdf(file)
 
@@ -44,7 +43,6 @@ def calibration_database(name: str = "ideal", version: str = "v1"):
 
         if name == "ideal_spex":
             cal_db = _generate_ideal_spex_cal_db()
-
 
             file.parent.mkdir(parents=True, exist_ok=True)
             cal_db.to_netcdf(file)

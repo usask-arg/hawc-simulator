@@ -1,0 +1,64 @@
+[project]
+name = "hawcsimulator"
+description="HAWCsat simulator package"
+authors = [ "Daniel Zawada <daniel.zawada@usask.ca>"]
+channels = ["conda-forge"]
+platforms = ["osx-arm64"]
+
+[pypi-dependencies]
+hawcsimulator = { path = ".", editable = true }
+hitran-api = "*"
+
+
+# Run dependencies
+[dependencies]
+numpy = "*"
+sasktran2 = {version=">2024.11.0"}
+astropy = "*"
+numba = "*"
+pip = "*"
+xarray = "*"
+netcdf4 = "*"
+appdirs = "*"
+jupyter = "*"
+matplotlib = "*"
+ruff = "*"
+setuptools_scm = "*"
+pre-commit = "*"
+
+# Test dependencies
+[feature.test.dependencies]
+pytest = ">=8.3.3,<9"
+
+# Doc dependencies
+[feature.docs]
+dependencies = {sphinx = "*", "myst-nb" = "*"}
+pypi-dependencies = {sphinx_book_theme = "*", sphinx_design = "*"}
+
+[feature.py311.dependencies]
+python = "3.11.*"
+[feature.py312.dependencies]
+python = "3.12.*"
+
+[feature.dev.pypi-dependencies]
+skretrieval = { path = "../skretrieval", editable = true }
+showlib = { path = "../show-lib", editable = true }
+aliprocessing = { path = "../ali-processing", editable = true }
+
+[feature.standard.pypi-dependencies]
+skretrieval = "*"
+showlib = "*"
+aliprocessing = "*"
+
+[environments]
+default = ["test", "docs", "standard"]
+py311 = ["py311", "standard"]
+py312 = ["py312", "standard"]
+dev = ["dev", "test", "docs"]
+
+[tasks]
+show-tutorial = { cmd = "jupyter notebook", cwd = "notebooks/show/tutorial" }
+test = { cmd = "pytest tests/", cwd = "." }
+pre-commit = { cmd = "pre-commit run -a", cwd = "." }
+docs = { cmd = "sphinx-build -b html docs/source docs/build", cwd = "." }
+readthedocs = { cmd = "rm -rf $READTHEDOCS_OUTPUT/html && cp -r docs/build/ $READTHEDOCS_OUTPUT/html", depends-on = ["docs"] }
