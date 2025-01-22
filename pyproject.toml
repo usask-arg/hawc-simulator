@@ -7,15 +7,14 @@ name = "hawcsimulator"
 dynamic = ["version"]
 description="HAWCsat simulator package"
 readme = "README.md"
-dependencies = ['numpy', 'sasktran2', 'netcdf4', 'appdirs']
+dependencies = ['numpy', 'sasktran2', 'netcdf4', 'appdirs', 'numba>0.55', 'aliprocessing', 'skretrieval', 'showlib']
 authors = [
     { name = "Daniel Zawada", email = "daniel.zawada@usask.ca" },
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 classifiers = [
     "Development Status :: 4 - Beta",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -24,68 +23,23 @@ classifiers = [
 [project.optional-dependencies]
 test = ["pytest"]
 
-[tool.pixi.project]
-channels = ["usask-arg-nightly", "conda-forge"]
-platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
-conda-pypi-map = {"usask-arg-nightly" = "local_mapping.json"}
+[tool.uv.sources]
+skretrieval = { path = "../skretrieval", editable = true }
+showlib = { path = "../show-lib", editable = true }
+aliprocessing = { path = "../ali-processing", editable = true }
 
-[tool.pixi.pypi-dependencies]
-hawcsimulator = { path = ".", editable = true }
-hitran-api = "*"
-
-# Run dependencies
-[tool.pixi.dependencies]
-numpy = "*"
-sasktran2 = {version=">=2024.11.0", channel="conda-forge"}
-astropy = "*"
-numba = "*"
-pip = "*"
-xarray = "*"
-netcdf4 = "*"
-appdirs = "*"
-jupyter = "*"
-matplotlib = "*"
-ruff = "*"
-myst-nb = "*"
-setuptools_scm = "*"
-pre-commit = "*"
-
-# Test dependencies
-[tool.pixi.feature.test.dependencies]
-pytest = ">=8.3.3,<9"
-
-# Doc dependencies
-[tool.pixi.feature.docs]
-dependencies = {sphinx = "*"}
-pypi-dependencies = {sphinx_book_theme = "*", sphinx_design = "*"}
-
-[tool.pixi.feature.nightly]
-dependencies = {skretrieval = {"channel" = "usask-arg-nightly", "version" = "*"}, showlib = {"channel" = "usask-arg-nightly", "version" = "*"}}
-
-[tool.pixi.feature.py310.dependencies]
-python = "3.10.*"
-[tool.pixi.feature.py311.dependencies]
-python = "3.11.*"
-[tool.pixi.feature.py312.dependencies]
-python = "3.12.*"
-
-[tool.pixi.environments]
-default = ["nightly", "test", "docs"]
-py310 = ["py310"]
-py311 = ["py311"]
-py312 = ["py312"]
-
-[tool.pixi.tasks]
-show-tutorial = { cmd = "jupyter notebook", cwd = "notebooks/show/tutorial" }
-test = { cmd = "pytest tests/", cwd = "." }
-pre-commit = { cmd = "pre-commit run -a", cwd = "." }
-docs = { cmd = "sphinx-build -b html docs/source docs/build", cwd = "." }
-readthedocs = { cmd = "rm -rf $READTHEDOCS_OUTPUT/html && cp -r docs/build/ $READTHEDOCS_OUTPUT/html", depends_on = ["docs"] }
-
-dev-install-showlib = { cmd = "pip install --no-deps -e  ../show-lib", cwd = "."}
-dev-install-skretrieval = { cmd = "pip install --no-deps -e ../skretrieval", cwd = "." }
-dev-install-aliprocessing = { cmd = "pip install --no-deps -e ../ali-processing", cwd = "." }
-dev-install-sasktran2 = { cmd = "pip install --no-deps -e ../sasktran2", cwd = "." }
+[dependency-groups]
+dev = [
+    "sphinx",
+    "myst-nb",
+    "sphinx_book_theme",
+    "sphinx_design",
+    "pre-commit",
+    "pytest",
+    "ruff",
+    "matplotlib",
+    "jupyter",
+]
 
 [tool.setuptools_scm]
 write_to = "src/hawcsimulator/_version.py"

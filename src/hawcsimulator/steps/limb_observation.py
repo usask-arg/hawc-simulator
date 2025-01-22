@@ -10,8 +10,18 @@ class CreateLimbObservation(Step):
     def _run(self, data: dict, cfg: dict) -> dict:
         tan_alts = data["viewing_tangent_altitudes"]
         obs_time = cfg["time"]
+
+        if "tangent_solar_zenith_angle" in cfg:
+            # Forced angles
+            solar_handler = sk.solar.SolarGeometryHandlerForced(
+                cfg["tangent_solar_zenith_angle"], cfg["tangent_solar_azimuth_angle"]
+            )
+        else:
+            # Time angles
+            solar_handler = sk.solar.SolarGeometryHandlerAstropy()
+
         viewing_geo = sk.viewinggeo.LimbVertical.from_tangent_parameters(
-            solar_handler=sk.solar.SolarGeometryHandlerAstropy(),
+            solar_handler=solar_handler,
             tangent_altitudes=tan_alts,
             tangent_latitude=cfg["tangent_latitude"],
             tangent_longitude=cfg["tangent_longitude"],

@@ -170,3 +170,6 @@ src/hawcsimulator/_version.py
 local_scripts/
 
 *.DS_Store*
+pixi.lock
+.ruff_cache
+uv.lock

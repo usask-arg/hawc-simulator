@@ -3,7 +3,6 @@ from __future__ import annotations
 import numpy as np
 import sasktran2 as sk
 import xarray as xr
-from showlib.l2.solar.model import SHOWSolarModel
 from skretrieval.core.sasktranformat import SASKTRANRadiance
 from skretrieval.retrieval.forwardmodel import IdealViewingMixin
 from skretrieval.retrieval.observation import Observation
@@ -27,8 +26,6 @@ class FERGeneratorBasic(IdealViewingMixin):
 
         self._sk_config = sk.Config()
 
-        self._solar_model = SHOWSolarModel()
-
     @property
     def model_geo(self):
         return self._model_geo["measurement"]
@@ -51,15 +48,5 @@ class FERGeneratorBasic(IdealViewingMixin):
         engine = sk.Engine(self._sk_config, self.model_geo, self.viewing_geo)
 
         sk2_rad = engine.calculate_radiance(atmosphere)
-
-        solar_irradiance = self._solar_model.irradiance(
-            sk2_rad["wavelength"], mjd=54372
-        )
-
-        sk2_rad["radiance"] *= xr.DataArray(
-            solar_irradiance,
-            dims=["wavelength"],
-            coords={"wavelength": sk2_rad["wavelength"].to_numpy()},
-        )
 
         return SASKTRANRadiance.from_sasktran2(sk2_rad)

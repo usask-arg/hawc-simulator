@@ -6,9 +6,6 @@ from hawcsimulator.steps import Step
 
 class IdealSHOWModelL1b(Step):
     """
-    Generates L1b data from the Front End Radiance assuming that the only transformation is
-    a convolution of the spectral line shape.
-
     Requires to be previously calculated
 
     - calibration_database
