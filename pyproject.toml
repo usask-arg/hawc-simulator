@@ -23,11 +23,6 @@ classifiers = [
 [project.optional-dependencies]
 test = ["pytest"]
 
-[tool.uv.sources]
-skretrieval = { path = "../skretrieval", editable = true }
-showlib = { path = "../show-lib", editable = true }
-aliprocessing = { path = "../ali-processing", editable = true }
-
 [dependency-groups]
 dev = [
     "sphinx",
