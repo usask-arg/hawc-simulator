@@ -1,19 +1,17 @@
 from __future__ import annotations
 
+import xarray as xr
+from showlib.l1b.data import L1bDataSet
 from showlib.processing.l1b_to_l2 import process_l1b_to_l2
 
-from hawcsimulator.steps import Step
 
+def l2(
+    l1b: L1bDataSet,
+    program_of_record: xr.Dataset,
+    calibration_database: xr.Dataset,
+    l2_cfg: dict | None = None,
+) -> list:
+    if l2_cfg is None:
+        l2_cfg = {}
 
-class SHOWLibL1bToL2(Step):
-    def _run(self, data: dict, cfg: dict) -> dict:  # noqa: ARG002
-        data["l2"] = process_l1b_to_l2(
-            data["l1b"], data["por"], data["calibration_database"]
-        )
-
-        return data
-
-    def _validate_data(self, data: dict):
-        assert "l1b" in data
-        assert "por" in data
-        assert "calibration_database" in data
+    return process_l1b_to_l2(l1b, program_of_record, calibration_database, **l2_cfg)

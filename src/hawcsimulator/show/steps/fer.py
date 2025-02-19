@@ -2,42 +2,53 @@ from __future__ import annotations
 
 import numpy as np
 import sasktran2 as sk
+from hamilton.function_modifiers import extract_fields
+from skretrieval.core.sasktranformat import SASKTRANRadiance
 
+from hawcsimulator.datastructures.atmosphere import Atmosphere
+from hawcsimulator.datastructures.viewinggeo import ObservationContainer
 from hawcsimulator.fer import FERGeneratorBasic
-from hawcsimulator.steps import Step
 
 
-class GenerateFER(Step):
-    def _run(self, data: dict, cfg: dict) -> dict:
-        observation = data["observation"]
+@extract_fields(
+    {
+        "front_end_radiance": SASKTRANRadiance,
+        "sk2_atmosphere": sk.Atmosphere,
+    }
+)
+def sk2_atm_and_front_end_radiance(
+    observation: ObservationContainer,
+    atmosphere: Atmosphere,
+    altitude_grid: np.ndarray,
+    sk2_kwargs: dict | None = None,
+) -> dict:
+    if sk2_kwargs is None:
+        sk2_kwargs = {}
 
-        # Construct the FER generator
-        fer_gen = FERGeneratorBasic(
-            observation, cfg.get("altitude_grid", np.arange(0.0, 65001, 1000.0))
-        )
+    # Construct the FER generator
+    fer_gen = FERGeneratorBasic(observation.observation, altitude_grid)
 
-        atmosphere = sk.Atmosphere(
-            model_geometry=fer_gen.model_geo,
-            config=fer_gen.sk_config,
-            **cfg.get(
-                "spectral_grid", {"wavenumber_cminv": np.arange(7295, 7340, 0.02)}
-            ),
-            calculate_derivatives=False,
-        )
+    # fer_gen.sk_config.los_refraction = True
 
-        sk.climatology.us76.add_us76_standard_atmosphere(atmosphere)
+    for k, v in sk2_kwargs:
+        setattr(fer_gen.sk_config, k, v)
 
-        for k, v in data["atmosphere"].items():
-            atmosphere[k] = v
+    sk2_atmosphere = sk.Atmosphere(
+        model_geometry=fer_gen.model_geo,
+        config=fer_gen.sk_config,
+        wavenumber_cminv=np.arange(7295, 7340, 0.02),
+        calculate_derivatives=False,
+    )
 
-        # Run the FER generator
-        rad = fer_gen.run(atmosphere)
+    sk.climatology.us76.add_us76_standard_atmosphere(sk2_atmosphere)
 
-        data["fer"] = rad
-        data["sk_atmosphere"] = atmosphere
+    for k, v in atmosphere.constituents.items():
+        sk2_atmosphere[k] = v
 
-        return data
+    # Run the FER generator
+    rad = fer_gen.run(sk2_atmosphere)
 
-    def _validate_data(self, data: dict):
-        assert "observation" in data
-        assert "atmosphere" in data
+    return {
+        "front_end_radiance": rad,
+        "sk2_atmosphere": sk2_atmosphere,
+    }

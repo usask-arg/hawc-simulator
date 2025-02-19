@@ -39,6 +39,15 @@ ali/quickstart.md
 ```{toctree}
 :maxdepth: 4
 :hidden:
+:caption: API Reference
+
+api/steps.md
+api/datacontainers.md
+```
+
+```{toctree}
+:maxdepth: 4
+:hidden:
 :caption: For Developers
 
 developer/local_setup.md

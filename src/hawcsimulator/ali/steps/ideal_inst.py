@@ -1,34 +1,27 @@
 from __future__ import annotations
 
+import xarray as xr
+from aliprocessing.l1b.data import L1bImage
+from skretrieval.core.sasktranformat import SASKTRANRadiance
+
 from hawcsimulator.ali.inst_model import L1bGeneratorIdeal
-from hawcsimulator.steps import Step
+from hawcsimulator.datastructures.viewinggeo import ObservationContainer
 
 
-class IdealALIModelL1b(Step):
-    """
-    Generates L1b data from the Front End Radiance assuming that the only transformation is
-    a convolution of the spectral line shape.
+def l1b(
+    calibration_database: xr.Dataset,
+    observation: ObservationContainer,
+    front_end_radiance: SASKTRANRadiance,
+    polarization_states: list,
+    l1b_cfg: dict | None = None,
+) -> L1bImage:
+    if l1b_cfg is None:
+        l1b_cfg = {}
 
-    Requires to be previously calculated
-
-    - calibration_database
-    - observation
-    - fer
-
-    """
-
-    def _run(self, data: dict, cfg: dict) -> dict:
-        l1b_gen = L1bGeneratorIdeal(
-            data["calibration_database"],
-            data["observation"],
-            pol_states=data["polarization_states"],
-            **cfg,
-        )
-        data["l1b"] = l1b_gen.run(data["fer"])
-
-        return data
-
-    def _validate_data(self, data: dict):
-        assert "calibration_database" in data
-        assert "observation" in data
-        assert "fer" in data
+    l1b_gen = L1bGeneratorIdeal(
+        calibration_database,
+        observation.observation,
+        pol_states=polarization_states,
+        **l1b_cfg,
+    )
+    return l1b_gen.run(front_end_radiance)

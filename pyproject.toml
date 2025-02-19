@@ -7,7 +7,7 @@ name = "hawcsimulator"
 dynamic = ["version"]
 description="HAWCsat simulator package"
 readme = "README.md"
-dependencies = ['numpy', 'sasktran2', 'netcdf4', 'appdirs', 'numba>0.55', 'aliprocessing', 'skretrieval', 'showlib']
+dependencies = ['numpy', 'sasktran2', 'netcdf4', 'appdirs', 'numba>0.55', 'aliprocessing', 'skretrieval', 'showlib', 'sf-hamilton', 'hitran-api']
 authors = [
     { name = "Daniel Zawada", email = "daniel.zawada@usask.ca" },
 ]
@@ -35,6 +35,12 @@ dev = [
     "matplotlib",
     "jupyter",
 ]
+
+[tool.uv.sources]
+aliprocessing = { path = "../ali-processing", editable = true }
+skretrieval = { path = "../skretrieval", editable = true }
+showlib = { path = "../show-lib", editable = true }
+
 
 [tool.setuptools_scm]
 write_to = "src/hawcsimulator/_version.py"
@@ -77,6 +83,7 @@ select = [
 extend-ignore = [
     "PLR",    # Design related pylint codes
     "E501",   # Line too long
+    "PD011",  # pandas .values
 ]
 src = ["src"]
 unfixable = [

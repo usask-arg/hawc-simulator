@@ -1,17 +1,13 @@
 from __future__ import annotations
 
+import sasktran2 as sk
+import xarray as xr
+
 from hawcsimulator.ali.por import por_from_atmosphere
-from hawcsimulator.steps import Step
+from hawcsimulator.datastructures.viewinggeo import ObservationContainer
 
 
-class ALIPORFromAtmosphere(Step):
-    def _run(self, data: dict, cfg: dict) -> dict:  # noqa: ARG002
-        data["por"] = por_from_atmosphere(
-            data["sk_atmosphere"], data["observation_time"]
-        )
-
-        return data
-
-    def _validate_data(self, data: dict):
-        assert "sk_atmosphere" in data
-        assert "observation_time" in data
+def program_of_record(
+    sk2_atmosphere: sk.Atmosphere, observation: ObservationContainer
+) -> xr.Dataset:
+    return por_from_atmosphere(sk2_atmosphere, observation.time)
