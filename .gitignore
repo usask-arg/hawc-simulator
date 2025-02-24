@@ -173,3 +173,5 @@ local_scripts/
 pixi.lock
 .ruff_cache
 uv.lock
+
+docs/source/api/generated

@@ -2,52 +2,60 @@ from __future__ import annotations
 
 import numpy as np
 import sasktran2 as sk
+from hamilton.function_modifiers import extract_fields
+from skretrieval.core.sasktranformat import SASKTRANRadiance
 
+from hawcsimulator.datastructures.atmosphere import Atmosphere
+from hawcsimulator.datastructures.viewinggeo import ObservationContainer
 from hawcsimulator.fer import FERGeneratorBasic
-from hawcsimulator.steps import Step
 
 
-class GenerateFER(Step):
-    def _run(self, data: dict, cfg: dict) -> dict:
-        observation = data["observation"]
+@extract_fields(
+    {
+        "front_end_radiance": SASKTRANRadiance,
+        "sk2_atmosphere": sk.Atmosphere,
+    }
+)
+def sk2_atm_and_front_end_radiance(
+    observation: ObservationContainer,
+    atmosphere: Atmosphere,
+    altitude_grid: np.ndarray,
+    sk2_kwargs: dict | None = None,
+) -> dict:
+    if sk2_kwargs is None:
+        sk2_kwargs = {}
 
-        # Construct the FER generator
-        fer_gen = FERGeneratorBasic(
-            observation, cfg.get("altitude_grid", np.arange(0.0, 65001, 1000.0))
-        )
+    # Construct the FER generator
+    fer_gen = FERGeneratorBasic(observation.observation, altitude_grid)
 
-        # Engine properties
-        fer_gen.sk_config.num_stokes = 3
-        fer_gen.sk_config.stokes_basis = sk.StokesBasis.Observer
-        fer_gen.sk_config.multiple_scatter_source = (
-            sk.MultipleScatterSource.DiscreteOrdinates
-        )
-        fer_gen.sk_config.num_streams = 8
-        fer_gen.sk_config.input_validation_mode = sk.InputValidationMode.Disabled
+    # Engine properties
+    fer_gen.sk_config.num_stokes = 3
+    fer_gen.sk_config.stokes_basis = sk.StokesBasis.Observer
+    fer_gen.sk_config.multiple_scatter_source = (
+        sk.MultipleScatterSource.DiscreteOrdinates
+    )
+    fer_gen.sk_config.num_streams = 8
+    fer_gen.sk_config.input_validation_mode = sk.InputValidationMode.Disabled
 
-        for k, v in cfg.get("model_kwargs", {}).items():
-            setattr(fer_gen.sk_config, k, v)
+    for k, v in sk2_kwargs:
+        setattr(fer_gen.sk_config, k, v)
 
-        atmosphere = sk.Atmosphere(
-            model_geometry=fer_gen.model_geo,
-            config=fer_gen.sk_config,
-            **cfg.get("spectral_grid", {"wavelengths_nm": data["sample_wavelengths"]}),
-            calculate_derivatives=False,
-        )
+    sk2_atmosphere = sk.Atmosphere(
+        model_geometry=fer_gen.model_geo,
+        config=fer_gen.sk_config,
+        wavelengths_nm=observation.observation.sample_wavelengths()["measurement"],
+        calculate_derivatives=False,
+    )
 
-        sk.climatology.us76.add_us76_standard_atmosphere(atmosphere)
+    sk.climatology.us76.add_us76_standard_atmosphere(sk2_atmosphere)
 
-        for k, v in data["atmosphere"].items():
-            atmosphere[k] = v
+    for k, v in atmosphere.constituents.items():
+        sk2_atmosphere[k] = v
 
-        # Run the FER generator
-        rad = fer_gen.run(atmosphere)
+    # Run the FER generator
+    rad = fer_gen.run(sk2_atmosphere)
 
-        data["fer"] = rad
-        data["sk_atmosphere"] = atmosphere
-
-        return data
-
-    def _validate_data(self, data: dict):
-        assert "observation" in data
-        assert "atmosphere" in data
+    return {
+        "front_end_radiance": rad,
+        "sk2_atmosphere": sk2_atmosphere,
+    }

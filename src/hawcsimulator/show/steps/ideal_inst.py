@@ -1,26 +1,25 @@
 from __future__ import annotations
 
+import xarray as xr
+from showlib.l1b.data import L1bDataSet
+from skretrieval.core.sasktranformat import SASKTRANRadiance
+
+from hawcsimulator.datastructures.viewinggeo import ObservationContainer
 from hawcsimulator.show.inst_model import L1bGeneratorILS
-from hawcsimulator.steps import Step
 
 
-class IdealSHOWModelL1b(Step):
-    """
-    Requires to be previously calculated
+def l1b(
+    calibration_database: xr.Dataset,
+    observation: ObservationContainer,
+    front_end_radiance: SASKTRANRadiance,
+    l1b_cfg: dict | None = None,
+) -> L1bDataSet:
+    if l1b_cfg is None:
+        l1b_cfg = {}
 
-    - calibration_database
-    - observation
-    - fer
-
-    """
-
-    def _run(self, data: dict, cfg: dict) -> dict:  # noqa: ARG002
-        l1b_gen = L1bGeneratorILS(data["calibration_database"], data["observation"])
-        data["l1b"] = l1b_gen.run(data["fer"])
-
-        return data
-
-    def _validate_data(self, data: dict):
-        assert "calibration_database" in data
-        assert "observation" in data
-        assert "fer" in data
+    l1b_gen = L1bGeneratorILS(
+        calibration_database,
+        observation.observation,
+        **l1b_cfg,
+    )
+    return l1b_gen.run(front_end_radiance)

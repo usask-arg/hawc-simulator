@@ -2,42 +2,64 @@ from __future__ import annotations
 
 import warnings
 
-import hawcsimulator.steps as sim_steps
-from hawcsimulator.steps import Step
+from hamilton import registry
+
+import hawcsimulator.steps.atmosphere as atmosphere
+import hawcsimulator.steps.limb_observation as limb_observation
+
+registry.disable_autoload()
+from hamilton import driver  # noqa: E402
 
 
 class Simulator:
-    def __init__(self, steps: list[Step]) -> None:
-        self._steps = steps
+    def __init__(self) -> None:
+        self._modules = [atmosphere, limb_observation]
 
-        self._steps.append(sim_steps.CreateLimbObservation())
-        self._steps.append(sim_steps.DefaultAtmosphere())
-
-    def _initialize_data(self, data: dict) -> dict:
+    def _initialize_data(self) -> dict:
         pass
 
-    def run(self, cfg: dict, data: dict | None = None) -> dict:
+    def run(
+        self,
+        outputs: list[str],
+        input: None | dict = None,
+        extra_modules: list | None = None,
+        config: dict | None = None,
+    ) -> dict:
         warnings.filterwarnings("ignore")
 
-        if data is None:
-            data = {}
+        if input is None:
+            input = {}
 
-        data = self._initialize_data(data)
+        if config is None:
+            config = {}
 
-        for k, v in cfg.get("data", {}).items():
-            data[k] = v
+        default_config = {"atmosphere_method": "default", "observation_method": "limb"}
 
-        for step_name in cfg["steps"]:
-            step_cfg = cfg.get(step_name, {})
-            step = next(
-                step
-                for step in self._steps
-                if step_name.lower().replace("_", "")
-                in step.__class__.__name__.lower().replace("_", "")
-            )
-            data = step.run(data, step_cfg)
-        return data
+        default_config.update(config)
+
+        input = {**self._initialize_data(), **input}
+
+        if extra_modules is not None:
+            all_modules = self._modules + extra_modules
+        else:
+            all_modules = self._modules
+
+        dr = (
+            driver.Builder()
+            .with_config(
+                {}
+            )  # we don't have any configuration or invariant data for this example.
+            .with_modules(
+                *all_modules
+            )  # we need to tell hamilton where to load function definitions from
+            .with_config(default_config)
+            .build()
+        )
+
+        return dr.execute(outputs, inputs=input)
 
 
 if __name__ == "__main__":
-    cfg = {"steps": ["generate_l1b", "l1b_to_l2"], "generate_l1b": {}, "l1b_to_l2": {}}
+    test = Simulator()
+
+    res = test.run(input={"constituents": {"rayleigh": None}})
