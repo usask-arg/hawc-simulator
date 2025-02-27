@@ -28,7 +28,9 @@ def sk2_atm_and_front_end_radiance(
     # Construct the FER generator
     fer_gen = FERGeneratorBasic(observation.observation, altitude_grid)
 
-    # fer_gen.sk_config.los_refraction = True
+    fer_gen.sk_config.los_refraction = True
+    fer_gen.sk_config.multiple_scatter_source = sk.MultipleScatterSource.DiscreteOrdinates
+    fer_gen.sk_config.num_streams = 2
 
     for k, v in sk2_kwargs:
         setattr(fer_gen.sk_config, k, v)
@@ -36,7 +38,7 @@ def sk2_atm_and_front_end_radiance(
     sk2_atmosphere = sk.Atmosphere(
         model_geometry=fer_gen.model_geo,
         config=fer_gen.sk_config,
-        wavenumber_cminv=np.arange(7295, 7340, 0.02),
+        wavenumber_cminv=np.arange(7295, 7340, 0.01),
         calculate_derivatives=False,
     )
 
