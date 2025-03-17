@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
+import sasktran2 as sk
 import xarray as xr
 from aliprocessing.l2.optical import aerosol_median_radius_db
 
@@ -33,5 +34,11 @@ class IdealALISimulator(Simulator):
 
         data["aerosol_optical_property"] = aerosol_median_radius_db()
         data["aerosol_kwargs"] = {"extinction_wavelength_nm": 745.0}
+
+        data["constituents"] = {
+            "solar_irradiance": sk.constituent.SolarIrradiance(
+                mode="average", resolution=1.0
+            )
+        }
 
         return data
