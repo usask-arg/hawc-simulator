@@ -5,7 +5,7 @@ This guide assumes you have installed the `hawcsimulator` package through `uv`, 
 terminal currently open to that folder.
 
 ## Environment/IDE Setup
-Installatino through `uv` will have created a Python virtual environment inside the folder.  
+Installatino through `uv` will have created a Python virtual environment inside the folder.
 If you know what that means and have a Python IDE installed, feel free to use that.  Otherwise
 we can use a jupyter notebook for the rest of this guide:
 
@@ -19,11 +19,13 @@ A web browser should have opened up.  Create a new Python3 notebook and open it 
 from hawcsimulator.ali.configurations.ideal_spectrograph import IdealALISimulator
 
 import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
 
 simulator = IdealALISimulator()
 
 input = {
-        "tangent_latitude": 10.0,
+        "tangent_latitude": 30.0,
         "tangent_longitude": 0.0,
         "tangent_solar_zenith_angle": 60.0,
         "tangent_solar_azimuth_angle": 0.0,
@@ -47,6 +49,7 @@ plt.ylabel("Altitude [m]")
 
 ```{code-block} python
 from hawcsimulator.show.configurations.ideal import IdealSHOWSimulator
+import pandas as pd
 import matplotlib.pyplot as plt
 
 simulator = IdealSHOWSimulator()
