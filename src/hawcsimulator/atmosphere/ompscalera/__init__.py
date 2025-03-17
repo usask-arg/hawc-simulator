@@ -12,12 +12,9 @@ from hawcsimulator.appconfig import load_user_config
 
 
 def _curtain_file():
-    cfg = load_user_config()
-
-    if "omps_calipso_era5_curtain" in cfg:
-        return Path(cfg["omps_calipso_era5_curtain"]).expanduser()
-    msg = "No curtain file specified in the user config. Add 'omps_calipso_era5_curtain' to the user config."
-    raise ValueError(msg)
+    return sk.database.StandardDatabase().path(
+        "hawcsimulator/atmosphere/ompscalera/curtain_2019_9_1_h21m38_v101.nc"
+    )
 
 
 def _to_uniform_spacing(
