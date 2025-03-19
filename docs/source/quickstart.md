@@ -18,6 +18,9 @@ A web browser should have opened up.  Create a new Python3 notebook and open it 
 A simple ALI retrieval can be performed through,
 
 ```{code-block} python
+import os
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
+
 from hawcsimulator.ali.configurations.ideal_spectrograph import IdealALISimulator
 
 import numpy as np
@@ -88,7 +91,7 @@ from the measurement time.
 ```{code-block} python
 import sasktran2 as sk
 
-orbit_data = sk.database.StandardDatabase().load("hawcsimulator/geometry/example_orbit.nc")
+orbital_data = sk.database.StandardDatabase().load_ds("hawcsimulator/geometry/example_orbit.nc")
 
 
 measurement = orbital_data.isel(across=256, along=750)
