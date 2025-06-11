@@ -5,7 +5,7 @@ import warnings
 from hamilton import registry
 
 import hawcsimulator.steps.atmosphere as atmosphere
-import hawcsimulator.steps.limb_observation as limb_observation
+from hawcsimulator.steps import limb_observation, orbit_observation
 
 registry.disable_autoload()
 from hamilton import driver  # noqa: E402
@@ -13,9 +13,8 @@ from hamilton import driver  # noqa: E402
 
 class Simulator:
     def __init__(self) -> None:
-        self._modules = [atmosphere, limb_observation]
+        self._modules = [atmosphere, limb_observation, orbit_observation]
 
-    def _initialize_data(self) -> dict:
         pass
 
     def run(
