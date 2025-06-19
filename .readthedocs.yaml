@@ -7,8 +7,8 @@ build:
     python: "3.12"
   commands:
     - pip install uv
-    - uv run --no-sources python -m sphinx docs $READTHEDOCS_OUTPUT/html -b html -W
+    - uv run --no-sources python -m sphinx docs/source $READTHEDOCS_OUTPUT/html -b html -W
 
 # Build documentation in the docs/ directory with Sphinx
 sphinx:
-  configuration: docs/conf.py
+  configuration: docs/source/conf.py
