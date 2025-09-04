@@ -126,7 +126,7 @@ def atmosphere__omps_calipso_era5(
         )
     if aerosol_optical_property is not None:
         if "median_radius" in aerosol_optical_property._psize_dist.args():
-            aerosol_kwargs["median_radius"] = np.ones_like(alt_grid) * 80
+            aerosol_kwargs["median_radius"] = np.ones_like(alt_grid) * aerosol_kwargs.pop('uniform_median_radius_nm', 80)
         atmosphere["aerosol"] = sk.constituent.ExtinctionScatterer(
             aerosol_optical_property, alt_grid, ext, **aerosol_kwargs
         )

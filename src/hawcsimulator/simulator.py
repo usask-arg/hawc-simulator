@@ -33,7 +33,7 @@ class Simulator:
         if config is None:
             config = {}
 
-        default_config = {"atmosphere_method": "default", "observation_method": "limb"}
+        default_config = {"atmosphere_method": "default", "observation_method": "limb", "FER_provided": 'front_end_radiance' in input.keys()}
 
         default_config.update(config)
 
@@ -55,7 +55,6 @@ class Simulator:
             .with_config(default_config)
             .build()
         )
-
         return dr.execute(outputs, inputs=input)
 
 
