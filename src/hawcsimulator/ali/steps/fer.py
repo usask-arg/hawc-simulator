@@ -8,15 +8,17 @@ from skretrieval.core.sasktranformat import SASKTRANRadiance
 from hawcsimulator.datastructures.atmosphere import Atmosphere
 from hawcsimulator.datastructures.viewinggeo import ObservationContainer
 from hawcsimulator.fer import FERGeneratorBasic
+from hamilton.function_modifiers import config
 
 
 @extract_fields(
     {
-        "front_end_radiance": SASKTRANRadiance,
+        # "front_end_radiance": SASKTRANRadiance,
+        "fer_gen": FERGeneratorBasic,
         "sk2_atmosphere": sk.Atmosphere,
     }
 )
-def sk2_atm_and_front_end_radiance(
+def sk2_atm_and_front_end_radiance_gen(
     observation: ObservationContainer,
     atmosphere: Atmosphere,
     altitude_grid: np.ndarray,
@@ -37,7 +39,7 @@ def sk2_atm_and_front_end_radiance(
     fer_gen.sk_config.num_streams = 8
     fer_gen.sk_config.input_validation_mode = sk.InputValidationMode.Disabled
 
-    for k, v in sk2_kwargs:
+    for k, v in sk2_kwargs.items():
         setattr(fer_gen.sk_config, k, v)
 
     sk2_atmosphere = sk.Atmosphere(
@@ -52,10 +54,14 @@ def sk2_atm_and_front_end_radiance(
     for k, v in atmosphere.constituents.items():
         sk2_atmosphere[k] = v
 
-    # Run the FER generator
-    rad = fer_gen.run(sk2_atmosphere)
+    # # Run the FER generator
+    # rad = fer_gen.run(sk2_atmosphere)
 
     return {
-        "front_end_radiance": rad,
+        "fer_gen": fer_gen,
         "sk2_atmosphere": sk2_atmosphere,
     }
+
+@config.when(FER_provided=False)
+def front_end_radiance(fer_gen: FERGeneratorBasic, sk2_atmosphere: sk.Atmosphere)->SASKTRANRadiance:
+    return fer_gen.run(sk2_atmosphere)
