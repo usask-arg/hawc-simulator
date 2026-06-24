@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import xarray as xr
+from showlib.cal_db import CalibrationDatabase
 from showlib.l1b.data import L1bDataSet
 from skretrieval.core.sasktranformat import SASKTRANRadiance
 
@@ -9,7 +9,7 @@ from hawcsimulator.show.inst_model import L1bGeneratorILS
 
 
 def l1b(
-    calibration_database: xr.Dataset,
+    calibration_database: CalibrationDatabase,
     observation: ObservationContainer,
     front_end_radiance: SASKTRANRadiance,
     l1b_cfg: dict | None = None,
@@ -18,7 +18,7 @@ def l1b(
         l1b_cfg = {}
 
     l1b_gen = L1bGeneratorILS(
-        calibration_database,
+        calibration_database._ds,
         observation.observation,
         **l1b_cfg,
     )
