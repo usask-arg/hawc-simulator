@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 import xarray as xr
+from showlib.cal_db import CalibrationDatabase
 from showlib.l2.optical import h2o_optical_property
 from showlib.processing.l1b_to_l2 import stratospheric_aerosol_optical_property
 
@@ -24,8 +25,8 @@ class IdealSHOWSimulator(Simulator):
 
     def _initialize_data(self) -> dict:
         data = {}
-        data["calibration_database"] = xr.open_dataset(
-            calibration_database("ideal", "v1")
+        data["calibration_database"] = CalibrationDatabase(
+            xr.open_dataset(calibration_database("ideal", "v1"))
         )
 
         data["viewing_tangent_altitudes"] = np.arange(0, 40001, 500.0)
@@ -33,9 +34,9 @@ class IdealSHOWSimulator(Simulator):
 
         data["altitude_grid"] = np.arange(0, 65001, 1000.0)
 
-        data["sample_wavelengths"] = (
-            1e7 / data["calibration_database"]["sample_wavenumber"].to_numpy()
-        )
+        data["sample_wavelengths"] = 1e7 / data[
+            "calibration_database"
+        ].nominal_central_wavenumbers(None)
 
         data["h2o_optical_property"] = h2o_optical_property()
         data["aerosol_optical_property"] = stratospheric_aerosol_optical_property()
