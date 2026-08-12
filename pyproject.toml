@@ -35,6 +35,7 @@ classifiers = [
 
 [project.optional-dependencies]
 test = ["pytest"]
+orbits = ["skplatform>=0.2.17"]
 
 [dependency-groups]
 dev = [
