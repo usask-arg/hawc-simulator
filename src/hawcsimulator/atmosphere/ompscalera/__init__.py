@@ -44,14 +44,12 @@ def load_data(central_latitude):
     omps = xr.Dataset(ds["OMPS"])
     era5 = xr.Dataset(ds["ERA5"])
 
-    omps = omps.swap_dims({"time": "latitude"}).interp(latitude=era5.latitude)
+    omps = omps.swap_dims({"time": "latitude"}).interp(latitude=era5.latitude.values)
     era5 = era5.swap_dims({"time": "latitude"}).fillna(0.0)
     calipso = calipso.swap_dims({"time": "latitude"})
 
-    omps = (
-        omps.interp(altitude=np.arange(0, 40.0, 0.5))
-        .swap_dims({"time": "latitude"})
-        .interp(latitude=central_latitude)
+    omps = omps.interp(altitude=np.arange(0, 40.0, 0.5)).interp(
+        latitude=central_latitude
     )
 
     omps["h2o_vmr"] = (
