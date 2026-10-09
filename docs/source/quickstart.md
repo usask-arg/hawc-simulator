@@ -43,7 +43,7 @@ input = {
 data = simulator.run(["l2", "atmosphere"], input, config={"atmosphere_method": "omps_calipso_era5"})
 
 data["l2"]["stratospheric_aerosol_extinction_per_m"].plot(y="altitude")
-plt.plot(data["atmosphere"].constituents["aerosol"].extinction_per_m, data["atmosphere"].constituents["aerosol"]._altitudes_m)
+plt.plot(data["atmosphere"].constituents["aerosol"].extinction_per_m, data["atmosphere"].constituents["aerosol"].altitudes_m)
 plt.xlabel("Aerosol Extinction [/m]")
 plt.ylabel("Altitude [m]")
 ```
@@ -75,7 +75,7 @@ data = simulator.run(["l2", "atmosphere"], input, config={"atmosphere_method": "
 plt.ylim(10000, 30000)
 plt.xscale("log")
 
-plt.plot(data["atmosphere"].constituents["h2o"]._vmr*1e6, data["atmosphere"].constituents["h2o"]._altitudes_m, label="H2O")
+plt.plot(data["atmosphere"].constituents["h2o"].vmr*1e6, data["atmosphere"].constituents["h2o"].altitudes_m, label="H2O")
 
 plt.xlabel("H2O VMR [ppm]")
 plt.ylabel("Altitude [m]")
@@ -84,28 +84,33 @@ plt.ylabel("Altitude [m]")
 ![show_sim](img/show_sim.png)
 
 ## Using Orbital Parameters
-Here we load in an example orbit for HAWCsat, and input the measurement parameters to the simulator.
+Here we load in an example orbit for HAWCsat, and input the measurement parameters to the ALI simulator.
 Note that we remove the specification of the solar angles which causes them to be determined automatically
-from the measurement time.
+from the measurement time.  When the solar angles are calculated this way the observer location must also be
+specified.
 
 ```{code-block} python
 import sasktran2 as sk
 
+ali_simulator = IdealALISimulator()
+
 orbital_data = sk.database.StandardDatabase().load_ds("hawcsimulator/geometry/example_orbit.nc")
 
 
-measurement = orbital_data.isel(across=256, along=750)
+measurement = orbital_data.isel(across=256, along=2650)
 
 input = {
         "tangent_latitude": float(measurement["latitude"]),
         "tangent_longitude": float(measurement["longitude"]),
+        "observer_latitude": float(measurement["observer_latitude"]),
+        "observer_longitude": float(measurement["observer_longitude"]),
         "altitude_grid": np.arange(0, 65001.0, 1000.0),
         "polarization_states": ["I", "dolp"],
         "sample_wavelengths": np.array([470.0, 745.0, 1020.0]),
         "time": pd.Timestamp(measurement["time"].values)
 }
 
-data = simulator.run(["l2", "atmosphere"], input, config={"atmosphere_method": "omps_calipso_era5"})
+data = ali_simulator.run(["l2", "atmosphere"], input, config={"atmosphere_method": "omps_calipso_era5"})
 ```
 
 ## Manually specifying the atmospheric state
@@ -114,10 +119,12 @@ from an example curtain of OMPS-LP stratospheric aerosol extinction, CALIPSO clo
 Here we run the SHOW simulator where we use the same atmosphere, but we override the water vapour profile,
 
 ```{code-block} python
+import sasktran2 as sk
+
 h2o = sk.climatology.mipas.constituent("H2O", sk.optical.HITRANAbsorber("H2O"))
 
-h2o._vmr[20] *= 5
-plt.plot(h2o._vmr, h2o._altitudes_m)
+h2o.vmr[20] *= 5
+plt.plot(h2o.vmr, h2o.altitudes_m)
 plt.xscale("log")
 
 input = {
@@ -136,7 +143,7 @@ data = simulator.run(["l2", "atmosphere"], input, config={"atmosphere_method": "
 plt.ylim(10000, 30000)
 plt.xscale("log")
 
-plt.plot(data["atmosphere"].constituents["h2o"]._vmr*1e6, data["atmosphere"].constituents["h2o"]._altitudes_m, label="H2O")
+plt.plot(data["atmosphere"].constituents["h2o"].vmr*1e6, data["atmosphere"].constituents["h2o"].altitudes_m, label="H2O")
 
 plt.xlabel("H2O VMR [ppm]")
 plt.ylabel("Altitude [m]")
