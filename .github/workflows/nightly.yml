@@ -1,0 +1,15 @@
+name: 'nightly'
+
+# Runs the test suite against the latest releases of all dependencies every night.
+# This is kept separate from test.yml because GitHub disables scheduled workflows
+# after 60 days without repository activity; if that happens only this workflow is
+# disabled and pull request testing keeps running.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  test:
+    uses: ./.github/workflows/test.yml

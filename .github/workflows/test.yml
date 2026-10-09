@@ -7,8 +7,10 @@ on:
       - main
   pull_request:
     types: [ opened, reopened, synchronize, labeled ]
-  schedule:
-    - cron: '0 0 * * *'
+  # The nightly run lives in nightly.yml. GitHub disables workflows that have a
+  # schedule after 60 days without repository activity, which would also stop
+  # the push/pull_request triggers here.
+  workflow_call:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
