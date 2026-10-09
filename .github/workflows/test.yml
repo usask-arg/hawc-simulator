@@ -7,8 +7,10 @@ on:
       - main
   pull_request:
     types: [ opened, reopened, synchronize, labeled ]
-  schedule:
-    - cron: '0 0 * * *'
+  # The nightly run lives in nightly.yml. GitHub disables workflows that have a
+  # schedule after 60 days without repository activity, which would also stop
+  # the push/pull_request triggers here.
+  workflow_call:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -27,13 +29,12 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
-          submodules: true
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
           python-version: ${{ matrix.python-version }}
 
