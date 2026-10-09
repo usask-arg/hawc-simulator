@@ -1,74 +1,63 @@
 (_dev_local_setup)=
 # Local Development Setup
 
-The preferred way to setup your environment for local development is through [`pixi`](https://pixi.sh/latest/)
-this guide will assume you have `pixi` and `git` installed, and have a terminal open where you can access both.
+The development environment is managed with [`uv`](https://docs.astral.sh/uv/).
+This guide assumes you have `uv` and `git` installed, and have a terminal open where you can access both.
 
-The hawc-simulator package can be cloned onto your machine with
-
-```{code}
-git clone https://github.com/usask-arg/hawc-simulator
-```
-
-Then do
-
-```{code}
-cd hawc-simulator
-
-pixi install
-```
-
-This will create a local Python environment that you can use to develop inside.  For details on how to use
-this in your preferred IDE see the [pixi documentation](https://pixi.sh/latest/).
-
-## Developing Inside Dependencies
+## Cloning the repositories
 The `hawc-simulator` package closely depends upon several companion packages, these are,
 
 - `skretrieval`: The core retrieval algorithms used for L1b->L2 processing
 - `showlib`: SHOW instrument specific algorithms
 - `ali-processing`: ALI instrument specific algorithms
-- `sasktran2`: The code radiative transfer model
+- `sasktran2`: The core radiative transfer model
 
-If you want to develop inside any of these packages and test changes to the simulator, we recommend creating
-a new folder to store all of the required repositories for the simulator, i.e. `hawc`.
+For development, `hawc-simulator` installs `skretrieval`, `showlib`, and `ali-processing` as editable
+installs from sibling folders (see `[tool.uv.sources]` in `pyproject.toml`).  This means they have to be
+cloned next to `hawc-simulator`.  We recommend creating a new folder to store all of the repositories,
+i.e. `hawc`, and from inside that folder running
 
-From inside the hawc directory, clone the the hawc simulator repository and any of the dependencies you want to develop inside.
-
+```{code}
 git clone https://github.com/usask-arg/hawc-simulator
 git clone https://github.com/usask-arg/skretrieval
 git clone https://github.com/usask-arg/show-lib
 git clone https://github.com/usask-arg/ali-processing
-git clone https://github.com/usask-arg/sasktran2
-
-
-Continue installing the simulator as normal,
-
-```{code}
-cd hawc-simulator
-
-pixi install
 ```
 
-Then additional commands can be run to change the installed version of each of these packages to your locally cloned version.
-For example, to change the version of `skretrieval` used to your own local installation, run
+## Creating the environment
+From inside the `hawc-simulator` folder run
 
 ```{code}
-pixi run dev-install-skretrieval
+uv sync
 ```
 
-The full list of provided commands is,
+This creates a local Python environment in `.venv` containing `hawc-simulator`, the three companion packages
+(installed from your local clones, so any changes you make to them are picked up immediately), and the
+development tools.  For details on how to use this environment in your preferred IDE see the
+[uv documentation](https://docs.astral.sh/uv/).
+
+If you only want to work on `hawc-simulator` itself, you can skip cloning the companion packages and
+use the released versions from PyPI instead,
 
 ```{code}
-pixi run dev-install-skretrieval
-pixi run dev-install-showlib
-pixi run dev-install-aliprocessing
-pixi run dev-install-sasktran2
+uv sync --no-sources
 ```
 
-You can run any number of these to change the used version to your local installed version.  To reset
-back to the official versions, you can do
+## Common commands
 
 ```{code}
-pixi clean
-pixi install
+uv run pytest                 # run the tests
+uv run pre-commit run -a      # lint and format
+uv run sphinx-build -b html docs/source docs/build   # build the docs
+uv run jupyter notebook       # start a notebook server inside the environment
 ```
+
+## Developing inside sasktran2
+`sasktran2` is installed from PyPI by default.  To temporarily use a local clone instead, run
+
+```{code}
+uv pip install -e ../sasktran2
+```
+
+Note that `sasktran2` contains compiled code, so this requires a working build toolchain (see the
+`sasktran2` documentation).  The next `uv sync` will reset the environment back to the released version.

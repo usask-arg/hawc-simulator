@@ -15,29 +15,24 @@ jobs:
     runs-on: ubuntu-latest
     if: github.repository_owner == 'usask-arg'
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
-          submodules: true
           fetch-depth: 0
-      - uses: actions/setup-python@v5
-        name: Install Python
-        with:
-          python-version: "3.11"
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install build twine
+      - name: Install uv
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          python-version: "3.12"
 
       - name: Build tarball and wheels
         run: |
           git clean -xdf
           git restore -SW .
-          python -m build
+          uv build
 
       - name: Check built artifacts
         run: |
-          python -m twine check --strict dist/*
+          uvx twine check --strict dist/*
           pwd
           if [ -f dist/*-0.0.0.tar.gz ]; then
             echo "❌ INVALID VERSION NUMBER"
@@ -45,7 +40,7 @@ jobs:
           else
             echo "✅ Looks good"
           fi
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: releases
           path: dist
@@ -60,16 +55,12 @@ jobs:
       id-token: write
     if: (github.event_name == 'release')
     steps:
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.x"
-
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v8
         with:
           name: releases
           path: dist
 
       - name: Publish package to PyPI
-        uses: pypa/gh-action-pypi-publish@v1.12.4
+        uses: pypa/gh-action-pypi-publish@v1.14.0
         with:
           verbose: true
