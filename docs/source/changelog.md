@@ -2,6 +2,12 @@
 # Changelog
 
 ## Unreleased
+- `config={"observation_method": "orbit"}` places the observation on an orbit: the spacecraft is where `orbit` puts
+  it at `time`, looking `look_azimuth` from its direction of motion.  The default orbit,
+  `hawcsimulator.geometry.orbit.NOMINAL_ORBIT`, is sun-synchronous at 450 km with a 13:30 ascending node, and the
+  default look, 180 degrees, is behind the spacecraft, which puts forward scatter in the northern hemisphere.  The
+  lines of sight go to sasktran2 as ECEF positions and look vectors, with the solar angles at each tangent point.
+  `hawcsimulator.geometry.orbit.time_at_tangent_latitude` finds the time of an observation
 - **Breaking:** the SHOW and ALI simulators are replaced by `hawcsimulator.show.SHOWSimulator` and
   `hawcsimulator.ali.ALISimulator`, built on the instrument models and processing in `showlib` and
   `aliprocessing`: radiance is simulated to L1A detector data, processed to L1B, and retrieved.

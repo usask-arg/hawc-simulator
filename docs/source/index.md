@@ -124,8 +124,31 @@ the instrument's orbit altitude.  `tangent_solar_zenith_angle` and `tangent_sola
 (relative to the line of sight, 0 is forward scatter) set the solar angles at every tangent point;
 without them the sun's position at `time` is used.
 
-## Using Orbital Parameters
-TBD: simulating observations along the HAWCsat orbit is being added in a separate change.
+## Simulating the HAWC orbit
+With `config={"observation_method": "orbit"}` the observation comes from an orbit instead.  The spacecraft is
+where the orbit puts it at `time`, and it takes a vertical limb image looking `look_azimuth` degrees from its
+direction of motion: 180, behind the spacecraft, by default.  The default orbit is the nominal HAWC orbit,
+`NOMINAL_ORBIT`: sun-synchronous at 450 km, crossing the equator northbound at 13:30 local time.  Looking
+behind, it sees forward scatter in the northern hemisphere.  `time_at_tangent_latitude` finds when the
+tangent point reaches a latitude.
+
+```{code-block} python
+import numpy as np
+
+from hawcsimulator.ali import ALISimulator
+from hawcsimulator.geometry.orbit import NOMINAL_ORBIT, time_at_tangent_latitude
+
+# The tangent point at 45 N, northbound (the daylit half of the orbit), on or after 21 June 2026
+time = time_at_tangent_latitude(NOMINAL_ORBIT, 45.0, np.datetime64("2026-06-21"))
+
+data = ALISimulator().run(
+        ["l2", "l2_truth"],
+        {"time": time},
+        config={"observation_method": "orbit", "atmosphere_method": "omps_calipso_era5"},
+)
+```
+The solar angles at each tangent point come from the sun's position at `time`.  Pass `orbit` (a
+`CircularOrbit`, e.g. from `CircularOrbit.sun_synchronous`) or `look_azimuth` in the input to change them.
 
 ## Manually specifying the atmospheric state
 The previous examples use the option `config={"atmosphere_method": "omps_calipso_era5"}` which loads in atmosphere data

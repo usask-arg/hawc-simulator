@@ -8,6 +8,11 @@ from hamilton.function_modifiers import config
 from hawcsimulator.datastructures.viewinggeo import ObservationContainer
 from hawcsimulator.geometry.ecef import ECEFLimbGeometry
 from hawcsimulator.geometry.observation import SimulatedObservationGeometry
+from hawcsimulator.geometry.orbit import (
+    NOMINAL_ORBIT,
+    CircularOrbit,
+    limb_look_vectors,
+)
 
 # Tangent altitude that places the observation and gives its model geometry [m]
 REFERENCE_ALTITUDE = 25000.0
@@ -120,6 +125,75 @@ def observation__limb(
             else None
         ),
         reference_altitude=REFERENCE_ALTITUDE,
+    )
+
+    obs_sza = np.rad2deg(np.arccos(viewing_geo.recommended_cos_sza()))
+    if obs_sza > maximum_allowed_sza:
+        msg = f"Observation SZA: {obs_sza} is greater than the allowed maximum: {maximum_allowed_sza}"
+        raise ValueError(msg)
+
+    return ObservationContainer(
+        SimulatedObservationGeometry(
+            viewing_geo=viewing_geo,
+            sample_wavel=sample_wavelengths,
+        ),
+        time,
+    )
+
+
+@config.when(observation_method="orbit")
+def observation__orbit(
+    viewing_tangent_altitudes: np.ndarray,
+    time: pd.Timestamp,
+    sample_wavelengths: np.ndarray,
+    orbit: CircularOrbit = NOMINAL_ORBIT,
+    look_azimuth: float = 180.0,
+    maximum_allowed_sza: float = 88,
+) -> ObservationContainer:
+    """
+    A limb observation from the spacecraft's position on an orbit: a vertical image at
+    ``time``, with one line of sight per viewing tangent altitude, each an ECEF ray
+    (hawcsimulator.geometry.ecef.ECEFLimbGeometry).
+
+    The lines of sight lie in the vertical plane at ``look_azimuth`` from the
+    spacecraft's direction of motion. Each has the solar angles at its own tangent
+    point, from the sun's position at ``time``.
+
+    Parameters
+    ----------
+    viewing_tangent_altitudes : np.ndarray
+        Tangent altitudes for the observation in [m], assuming no refraction
+    time : pd.Timestamp
+        Time of the observation.  hawcsimulator.geometry.orbit.time_at_tangent_latitude
+        finds the time the tangent point is at a given latitude.  Times without a
+        timezone are UTC
+    sample_wavelengths : np.ndarray
+        Observation sample wavelengths for the instrument in [nm]
+    orbit : CircularOrbit, optional
+        The spacecraft orbit, by default the nominal HAWC orbit,
+        hawcsimulator.geometry.orbit.NOMINAL_ORBIT: sun-synchronous at 450 km,
+        crossing the equator northbound at 13:30 local time
+    look_azimuth : float, optional
+        Azimuth of the lines of sight from the spacecraft's direction of motion in
+        [degrees], clockwise looking down: 0 looks ahead along the orbit and 180
+        behind it.  By default 180, which on the nominal orbit puts forward scatter
+        in the northern hemisphere
+    maximum_allowed_sza : float, optional
+        Largest solar zenith angle at 25 km in [degrees], by default 88
+
+    Returns
+    -------
+    ObservationContainer
+    """
+    state = orbit.state(time)
+    looks = limb_look_vectors(
+        state.position[0],
+        state.along_track[0],
+        viewing_tangent_altitudes,
+        look_azimuth,
+    )
+    viewing_geo = ECEFLimbGeometry(
+        state.time[0], state.position[0], looks, reference_altitude=REFERENCE_ALTITUDE
     )
 
     obs_sza = np.rad2deg(np.arccos(viewing_geo.recommended_cos_sza()))

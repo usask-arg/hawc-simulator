@@ -9,6 +9,8 @@ from aliprocessing.l2.optical import aerosol_median_radius_db
 from aliprocessing.solar import ChannelSolarIrradiance
 
 from hawcsimulator.ali import ALISimulator
+from hawcsimulator.geometry.observation import observation_geometry
+from hawcsimulator.geometry.orbit import NOMINAL_ORBIT, time_at_tangent_latitude
 
 FORCED = {
     "tangent_latitude": 30.0,
@@ -152,6 +154,46 @@ def test_time_based_l1b_solar_zenith_angle_matches_the_radiance():
     assert l1b_sza == pytest.approx(float(np.rad2deg(np.arccos(cos_sza))), abs=0.5)
 
 
+def test_orbit_l1b_geometry_matches_the_observation():
+    # L1A to L1B geolocates each frame with aliprocessing's own geometry and sun
+    time = time_at_tangent_latitude(NOMINAL_ORBIT, 45.0, np.datetime64("2026-06-21"))
+    data = ALISimulator().run(
+        ["l1b", "observation"],
+        {"time": time, "l1a_cfg": {"noise": False}},
+        config={"observation_method": "orbit"},
+    )
+
+    l1b = data["l1b"].isel(observation_set=0)
+    # The across-track bin centred on the boresight, or the two either side of it
+    angle = np.abs(l1b["across_track_angle"].to_numpy())
+    centre = np.flatnonzero(np.isclose(angle, angle.min()))
+    boresight = l1b.isel(across_track=centre).mean(["across_track", "wavelength"])
+
+    geometry = observation_geometry(data["observation"].observation)
+    reference_altitude = l1b["reference_altitude"].to_numpy()
+    for name, atol in [
+        ("solar_zenith_angle", 0.02),
+        ("relative_solar_azimuth_angle", 0.02),
+        ("tangent_latitude", 0.001),
+    ]:
+        expected = np.interp(
+            reference_altitude, geometry["tangent_altitude"], geometry[name]
+        )
+        np.testing.assert_allclose(boresight[name], expected, atol=atol)
+
+
+def _assert_retrieves_the_truth(l2):
+    # One profile: the first observation set's middle across-track bin
+    l2 = l2.isel(observation_set=0, across_track=0)
+    altitudes = [15e3, 20e3, 25e3, 30e3]
+    extinction = l2["aerosol_extinction"].interp(altitude=altitudes)
+    truth = np.interp(altitudes, ALTITUDE_GRID, TRUE_EXTINCTION)
+
+    np.testing.assert_allclose(extinction, truth, rtol=0.05)
+    median_radius = float(l2["aerosol_median_radius"].interp(altitude=20e3))
+    assert median_radius == pytest.approx(TRUE_MEDIAN_RADIUS, rel=0.05)
+
+
 @pytest.mark.slow
 def test_noise_free_retrieval_returns_the_truth():
     data = ALISimulator().run(
@@ -171,15 +213,25 @@ def test_noise_free_retrieval_returns_the_truth():
         rtol=1e-6,
     )
 
-    # One profile: the first observation set's middle across-track bin
-    l2 = data["l2"].isel(observation_set=0, across_track=0)
-    altitudes = [15e3, 20e3, 25e3, 30e3]
-    extinction = l2["aerosol_extinction"].interp(altitude=altitudes)
-    truth = np.interp(altitudes, ALTITUDE_GRID, TRUE_EXTINCTION)
+    _assert_retrieves_the_truth(data["l2"])
 
-    np.testing.assert_allclose(extinction, truth, rtol=0.05)
-    median_radius = float(l2["aerosol_median_radius"].interp(altitude=20e3))
-    assert median_radius == pytest.approx(TRUE_MEDIAN_RADIUS, rel=0.05)
+
+@pytest.mark.slow
+def test_noise_free_retrieval_on_the_orbit_returns_the_truth():
+    # Forward scatter at 45 N, with the solar angles varying along the lines of sight
+    time = time_at_tangent_latitude(NOMINAL_ORBIT, 45.0, np.datetime64("2026-06-21"))
+    data = ALISimulator().run(
+        ["l2"],
+        {
+            "time": time,
+            "constituents": {"aerosol": _aerosol()},
+            "l1a_cfg": {"noise": False},
+            "l2_cfg": {"minimizer": {"verbose": 0}},
+        },
+        config={"observation_method": "orbit"},
+    )
+
+    _assert_retrieves_the_truth(data["l2"])
 
 
 @pytest.mark.slow
