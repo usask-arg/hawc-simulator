@@ -12,7 +12,10 @@ from hawcsimulator.datastructures.viewinggeo import ObservationContainer
 
 
 @config.when(atmosphere_method="default")
-def atmosphere__default(constituents: dict | None = None) -> Atmosphere:
+def atmosphere__default(
+    constituents: dict | None = None,
+    h2o_optical_property: OpticalProperty | None = None,
+) -> Atmosphere:
     """
     Constructs an atmosphere manually from a dictionary of sasktran2.Constituent objects.
 
@@ -20,6 +23,9 @@ def atmosphere__default(constituents: dict | None = None) -> Atmosphere:
     ----------
     constituents : dict | None, optional
         A dictionary of sasktran2.Constituent objects, with {key: Constituent}, by default None
+    h2o_optical_property : OpticalProperty | None, optional
+        If given, the MIPAS standard H2O profile with this optical property is added
+        as "h2o", by default None
 
     Returns
     -------
@@ -35,6 +41,11 @@ def atmosphere__default(constituents: dict | None = None) -> Atmosphere:
         "solar_irradiance": sk.constituent.SolarIrradiance(mode="average"),
         "albedo": sk.constituent.LambertianSurface(0.3),
     }
+
+    if h2o_optical_property is not None:
+        atmosphere["h2o"] = sk.climatology.mipas.constituent(
+            "H2O", h2o_optical_property, climatology="std"
+        )
 
     for k, v in constituents.items():
         atmosphere[k] = v

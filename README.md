@@ -20,6 +20,7 @@ use `uv sync --no-sources` to use the released versions instead.  See the
 ```
 uv sync                       # create .venv with hawcsimulator and the dev tools
 uv run pytest                 # run the tests
+uv run pytest -m "not slow"   # skip the end-to-end SHOW and ALI retrievals, which take several minutes
 uv run pre-commit run -a      # lint and format
 uv run sphinx-build -b html docs/source docs/build   # build the docs
 ```

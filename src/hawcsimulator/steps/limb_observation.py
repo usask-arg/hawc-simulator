@@ -6,7 +6,11 @@ import sasktran2 as sk
 from hamilton.function_modifiers import config
 
 from hawcsimulator.datastructures.viewinggeo import ObservationContainer
+from hawcsimulator.geometry.ecef import ECEFLimbGeometry
 from hawcsimulator.geometry.observation import SimulatedObservationGeometry
+
+# Tangent altitude that places the observation and gives its model geometry [m]
+REFERENCE_ALTITUDE = 25000.0
 
 
 @config.when(observation_method="limb")
@@ -19,23 +23,29 @@ def observation__limb(
     sample_wavelengths: np.ndarray,
     observer_longitude: float | None = None,
     observer_latitude: float | None = None,
+    los_azimuth: float = 0.0,
     tangent_solar_zenith_angle: float | None = None,
     tangent_solar_azimuth_angle: float | None = None,
     maximum_allowed_sza: float = 88,
 ) -> ObservationContainer:
     """
-    Creates an idealized limb viewing observation based on a set of viewing tangent altitudes and
-    optionally solar angles at the tangent point.  The observation is created assuming the solar angles
-    are the same for every tangent altitude.
+    A limb observation from one observer: a vertical scan with one line of sight per
+    viewing tangent altitude, each an ECEF ray
+    (hawcsimulator.geometry.ecef.ECEFLimbGeometry).
 
+    The lines of sight lie in the vertical plane through the tangent point at
+    ``tangent_latitude``, ``tangent_longitude`` and 25 km, looking along
+    ``los_azimuth`` there, or from ``observer_latitude`` and ``observer_longitude``
+    when they are given. The observer is where that line of sight is at
+    ``observer_altitude``, so it is only near a given observer location.
 
     Parameters
     ----------
     viewing_tangent_altitudes : np.array
         Tangent altitudes for the observation in [m], assuming no refraction
     time : pd.Timestamp
-        Time of the observation.  Primarily used when the solar angles are not specified to calculate
-        the sun position
+        Time of the observation, which gives the sun's position when the solar angles
+        are not forced. Times without a timezone are UTC
     tangent_latitude : float
         Tangent latitude in [degrees]
     tangent_longitude : float
@@ -44,67 +54,72 @@ def observation__limb(
         Altitude of the observer in [m]
     sample_wavelengths : np.ndarray
         Observation sample wavelengths for the instrument in [nm]
-    observer_latitude: float
-        Latitude of the observer in [degrees], optional, only required if time based solar angles are used
-    observer_longitude: float
-        Longitude of the observer in [degrees], optional, only required if time based solar angles are used
+    observer_latitude, observer_longitude : float | None, optional
+        Approximate location of the observer in [degrees], which sets the direction
+        of the lines of sight. Give both or neither, by default None
+    los_azimuth : float, optional
+        Azimuth of the lines of sight at the tangent point in [degrees] clockwise from
+        north, used when the observer's location is not given, by default 0
     tangent_solar_zenith_angle : float | None, optional
-        Solar zenith angle in [degrees], by default None indicating it will be calculated from the observation time
+        Solar zenith angle in [degrees] at every tangent point, by default None
+        indicating the sun's position at ``time``
     tangent_solar_azimuth_angle : float | None, optional
-        Relative solar azimuth angle in [degrees] where 0 degrees is forward scatter, by default None indicating it will be
-        calculated from the observation time
+        Relative solar azimuth angle in [degrees] at every tangent point, where 0
+        degrees is forward scatter, by default None indicating the sun's position at
+        ``time``
+    maximum_allowed_sza : float, optional
+        Largest solar zenith angle at 25 km in [degrees], by default 88
 
     Returns
     -------
     ObservationContainer
     """
-    tan_alts = viewing_tangent_altitudes
-    obs_time = time
-
-    if (
+    forced = (
         tangent_solar_zenith_angle is not None
         and tangent_solar_azimuth_angle is not None
-    ):
-        # Forced angles
-        solar_handler = sk.solar.SolarGeometryHandlerForced(
-            tangent_solar_zenith_angle, tangent_solar_azimuth_angle
-        )
-        viewing_azimuth = 0.0
-    else:
-        # Time angles
-        solar_handler = sk.solar.SolarGeometryHandlerAstropy()
+    )
+    if (observer_latitude is None) != (observer_longitude is None):
+        msg = "Give both observer_latitude and observer_longitude, or neither"
+        raise ValueError(msg)
 
-        if observer_latitude is None or observer_longitude is None:
-            msg = "Have to specify observer_latitude and observer_longitude when using time based solar angles"
-            raise ValueError(msg)
-
-        # Here we also have to calculate the viewing azimuth angle
-        tangent_geo = sk.geodetic.WGS84()
-        tangent_geo.from_lat_lon_alt(tangent_latitude, tangent_longitude, 25000.0)
-
-        obs_geo = sk.geodetic.WGS84()
-        obs_geo.from_lat_lon_alt(
+    geodetic = sk.WGS84()
+    if observer_latitude is not None:
+        # The observer's location sets the direction the lines of sight look in
+        geodetic.from_lat_lon_alt(
             observer_latitude, observer_longitude, observer_altitude
         )
+        given_observer = np.asarray(geodetic.location)
+    geodetic.from_lat_lon_alt(tangent_latitude, tangent_longitude, REFERENCE_ALTITUDE)
+    tangent_point = np.asarray(geodetic.location)
+    north = -np.asarray(geodetic.local_south)
+    east = -np.asarray(geodetic.local_west)
+    if observer_latitude is not None:
+        towards = tangent_point - given_observer
+        los_azimuth = float(np.degrees(np.arctan2(towards @ east, towards @ north)))
+    azimuth = np.deg2rad(los_azimuth)
+    horizontal = np.cos(azimuth) * north + np.sin(azimuth) * east
+    # The observer is where the line of sight through the tangent point enters the
+    # observer's altitude
+    observer = np.asarray(
+        geodetic.altitude_intercepts(observer_altitude, tangent_point, horizontal)[0]
+    )
+    looks = np.array(
+        [
+            geodetic.from_tangent_altitude(altitude, observer, horizontal)
+            for altitude in np.atleast_1d(viewing_tangent_altitudes)
+        ]
+    )
 
-        viewing_ray = tangent_geo.location - obs_geo.location
-        viewing_ray = viewing_ray / np.linalg.norm(viewing_ray)
-
-        north = -1 * tangent_geo.local_south  # x axis
-        east = -1 * tangent_geo.local_west  # y axis
-
-        viewing_azimuth = np.arctan2(
-            np.dot(east, viewing_ray), np.dot(north, viewing_ray)
-        )
-
-    viewing_geo = sk.viewinggeo.LimbVertical.from_tangent_parameters(
-        solar_handler=solar_handler,
-        tangent_altitudes=tan_alts,
-        tangent_latitude=tangent_latitude,
-        tangent_longitude=tangent_longitude,
-        time=obs_time,
-        observer_altitude=observer_altitude,
-        viewing_azimuth=viewing_azimuth,
+    viewing_geo = ECEFLimbGeometry(
+        time,
+        observer,
+        looks,
+        forced_solar_angles=(
+            (tangent_solar_zenith_angle, tangent_solar_azimuth_angle)
+            if forced
+            else None
+        ),
+        reference_altitude=REFERENCE_ALTITUDE,
     )
 
     obs_sza = np.rad2deg(np.arccos(viewing_geo.recommended_cos_sza()))
@@ -117,5 +132,5 @@ def observation__limb(
             viewing_geo=viewing_geo,
             sample_wavel=sample_wavelengths,
         ),
-        obs_time,
+        time,
     )

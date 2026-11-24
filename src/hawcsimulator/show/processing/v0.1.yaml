@@ -1,0 +1,33 @@
+# SHOW processing v0.1: showlib's L1A to L1B and L2 retrieval defaults, at the
+# showlib version recorded in the outputs, with the changes below.
+version: v0.1
+description: >-
+  showlib's default processing, with the preprocessor sample chosen automatically,
+  lines of sight up to 35 km used, the surface albedo held at its prior and a
+  stopping tolerance of 0.1% in the cost.
+
+# Keyword arguments of showlib.processing.l1a_to_l1b.process_l1a_to_l1b
+l1b:
+  apodization: 10.0
+
+# Overrides of showlib's retrieval configuration (showlib/l2/retrieval_config.yaml)
+l2:
+  preprocessor:
+    wavenumber_cminv: auto
+  observation:
+    # showlib's default, 30 km, leaves 28-30 km at the top edge of the measurements,
+    # where the noise-free retrieval is up to 20% low; the instrument sees to 45 km
+    upper_bound_m: 35000
+  minimizer:
+    # Stop when the cost changes by less than 0.1%: showlib's default (1e-6) keeps
+    # the H2O retrieval iterating to its evaluation limit after it has reached the
+    # noise level, for H2O changes far inside the noise error
+    ftol: 1.0e-3
+  retrieval:
+    state:
+      surface:
+        lambertian_albedo:
+          # showlib's default (0) leaves the albedo's level unconstrained, which made
+          # the H2O noise error erratic (up to 10x, above the solution error); this
+          # holds the albedo at its initial value (0.3) to about 0.01
+          prior_influence: 1.0e+4

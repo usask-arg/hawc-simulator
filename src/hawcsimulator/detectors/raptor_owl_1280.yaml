@@ -1,0 +1,29 @@
+# Raptor Photonics Owl 1280 VIS-SWIR InGaAs camera.
+#
+# From the public datasheet, document USOWL1.7-VS-CL-1280 0120. The quantum
+# efficiency was read by eye from the datasheet's graph ("data supplied by sensor
+# manufacturer") and is approximate; below 600 nm the graph is noisy.
+name: Raptor Owl 1280
+pixel_pitch_m: 1.0e-5
+rows: 1024
+columns: 1280
+adc_bits: 12
+gain_modes:
+  low:
+    full_well_e: 450000
+    read_noise_e: 160            # typical; the specification is < 190
+    dynamic_range_db: 69
+    max_exposure_s: 0.0925       # longest single exposure; the shortest is 20 us
+  high:
+    full_well_e: 10000
+    read_noise_e: 47             # typical; the specification is < 50
+    dynamic_range_db: 47
+    max_exposure_s: 0.0865       # longest single exposure; the shortest is 40 us
+dark_current_e_per_s: 19000      # specification upper limit, at 15 C
+quantum_efficiency:
+  wavelength_nm: [500, 525, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000, 1050,
+                  1100, 1150, 1200, 1250, 1300, 1350, 1400, 1450, 1500, 1550, 1600,
+                  1640, 1660, 1680, 1700, 1750, 1800]
+  value: [0.28, 0.28, 0.30, 0.40, 0.415, 0.435, 0.46, 0.50, 0.565, 0.66, 0.79, 0.86,
+          0.87, 0.88, 0.895, 0.915, 0.927, 0.927, 0.917, 0.90, 0.885, 0.86, 0.865,
+          0.795, 0.80, 0.76, 0.45, 0.10, 0.01, 0.0]

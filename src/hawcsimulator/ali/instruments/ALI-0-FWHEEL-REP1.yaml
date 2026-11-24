@@ -1,0 +1,65 @@
+# Representative phase 0 ALI: a filter-wheel imager with three polarization sub-images
+# stacked vertically on a Raptor Owl 1280 detector, described by its performance rather
+# than its design.
+#
+# The coverage, sampling and channels are those of the phase 0 design, with a regular
+# layout: each sub-image has rows of equal field of view and no distortion, and every
+# pixel the same etendue. The optics transmission and the polarizers' principal
+# transmittance are assumed values, and the polarizer angles are stand-ins.
+name: ALI-0-FWHEEL-REP1
+description: >
+  Representative phase 0 ALI filter-wheel imager: three polarizations at 60, 0 and -60
+  degrees, five 5 nm channels, 5.2 degree across-track field of view, imaging about
+  -2 to 52 km, frames averaging exposures of at most 92.5 ms.
+valid_from: "2026-11-24T00:00:00Z"
+
+orbit_altitude_m: 450000.0
+
+layout:
+  rows_per_polarization: 328
+  gap_rows: 20
+  columns: 1280
+
+optics:
+  pixel_fov_rad: 7.1e-5                       # square pixels
+  boresight_tangent_altitude_m: 25000.0       # centre of each sub-image
+  aperture_area_per_polarization_m2: 1.25e-4
+  transmission: 0.8                           # assumed
+  vignetting: 0.0                             # every pixel the same etendue
+  pixel_response_nonuniformity: 0.01          # assumed
+
+polarizers:
+  angles_deg: [60.0, 0.0, -60.0]              # stand-ins
+  # Thorlabs LPVIS nanoparticle film polarizers, specified for 550-1500 nm
+  specified_range_nm: [550.0, 1500.0]
+  extinction_ratio: 10000.0                   # listed k1/k2 within the specified range
+  extinction_ratio_outside_range: 100.0       # assumed; the 525 and 1560 nm channels
+  principal_transmittance: 0.85               # assumed k1
+
+channels:
+  centre_wavelengths_nm: [525.0, 745.0, 869.0, 1020.0, 1560.0]
+  # 5 nm FWHM, flat over the central 80% of the band with raised-cosine edges, and
+  # OD 4.5 blocking out of band
+  filter:
+    fwhm_nm: 5.0
+    flat_fraction: 0.8
+    peak_transmission: 0.85
+    blocking_od: 4.5
+  throughput_step_nm: 0.1
+
+detector:
+  model: raptor_owl_1280
+  gain_mode: low
+  coadd_exposures: true                       # each frame averages exposures of at most 92.5 ms
+  read_noise_e: 160                           # per exposure; the datasheet's typical low-gain value
+  dead_time_s: 0.0167                         # assumed: one 60 Hz full-frame readout between exposures
+  dark_offset_dn: 100.0                       # placeholder
+  dark_offset_spread_dn: 5.0                  # placeholder
+  dark_current_spread_fraction: 0.1           # placeholder
+  # Dark current is the datasheet value at 15 C, the assumed operating temperature
+
+l1b:
+  altitude_grid_m: [0.0, 50000.0, 250.0]
+  reference_altitudes_m: [0.0, 12500.0, 25000.0, 37500.0, 50000.0]
+  across_track_half_width_deg: 2.5
+  num_across_track_bins: 5

@@ -19,10 +19,11 @@ dependencies = [
     'pyyaml',
     'packaging',
     'numba>0.55',
-    'aliprocessing>=2026.10.0',
-    'skretrieval>=2026.10.0',
-    'showlib>=2026.10.0',
+    'aliprocessing>=2026.11.0',
+    'skretrieval>=2026.11.0',
+    'showlib>=2026.11.0',
     'sf-hamilton>=1.87.0,<2',
+    'threadpoolctl>=3',
     'hitran-api',
     "dask>=2025.11.0",
     "seaborn>=0.13.2",
@@ -72,6 +73,9 @@ filterwarnings = [
     "ignore:(ast.Str|Attribute s|ast.NameConstant|ast.Num) is deprecated:DeprecationWarning:_pytest",  # Python 3.12
 ]
 testpaths = ["tests"]
+markers = [
+    "slow: end-to-end retrievals that take several minutes (deselect with '-m \"not slow\"')",
+]
 
 [tool.ruff]
 select = [

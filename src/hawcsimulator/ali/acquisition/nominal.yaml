@@ -1,0 +1,18 @@
+# ALI nominal acquisition: a limb stare. The filter wheel steps through every channel
+# once; each frame is exposed so its brightest pixel reaches 60% of saturation,
+# averaging exposures the detector allows, and a blank (dark) frame ends the set.
+name: nominal
+description: >
+  Limb stare with the boresight at 25 km; one observation set through every channel,
+  each frame filling the brightest pixel to 60% of saturation.
+
+pointing:
+  boresight_tangent_altitude_m: 25000.0   # the same for every observation set
+  boresight_roll_deg: 0.0
+
+timing:
+  num_sets: 1
+  exposure: auto              # total integration per frame [s]: "auto", one value or one per channel
+  fill: 0.6                   # for "auto": fraction of saturation the brightest pixel reaches
+  filter_change_s: 0.1        # assumed time to move the filter wheel between frames
+  blank_between_sets: true

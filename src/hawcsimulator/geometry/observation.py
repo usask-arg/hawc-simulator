@@ -5,6 +5,9 @@ import sasktran2 as sk
 from sasktran2.viewinggeo.base import ViewingGeometryContainer
 from skretrieval.retrieval.observation import Observation
 
+from hawcsimulator.geometry.ecef import ECEFLimbGeometry
+from hawcsimulator.geometry.utc import utc_times
+
 
 class SimulatedObservationGeometry(Observation):
     def __init__(
@@ -99,3 +102,51 @@ class SimulatedObservationGeometry(Observation):
         # l1.data["tangent_cos_sza"] = (["los"], self._tangent_cos_sza)
         # l1.data["tangent_relative_saa"] = (["los"], self._tangent_relative_saa)
         # l1.data["observer_altitude"] = self._observer_altitude
+
+
+def observation_geometry(observation: SimulatedObservationGeometry) -> dict:
+    """
+    Geometry of each line of sight of a simulated limb observation, as the front end
+    radiance calculation used it.
+
+    Parameters
+    ----------
+    observation : SimulatedObservationGeometry
+
+    Returns
+    -------
+    dict
+        Arrays along the lines of sight: tangent_altitude [m], tangent_latitude
+        [degrees_north], tangent_longitude [degrees_east, -180 to 180),
+        observer_latitude, observer_longitude, observer_altitude [m],
+        solar_zenith_angle [degrees], relative_solar_azimuth_angle [degrees, -180 to
+        180, 0 is forward scatter] and los_azimuth_angle [degrees clockwise from
+        north at the tangent point, 0 to 360)
+    """
+    viewing_geo = observation._viewing_geo
+    if not isinstance(viewing_geo, ECEFLimbGeometry):
+        msg = (
+            "Simulated observations are built from ECEF lines of sight "
+            f"(hawcsimulator.geometry.ecef.ECEFLimbGeometry), not {type(viewing_geo).__name__}"
+        )
+        raise TypeError(msg)
+    geo = viewing_geo.geometry_ds
+    return {name: geo[name].to_numpy() for name in _GEOMETRY_NAMES}
+
+
+_GEOMETRY_NAMES = (
+    "tangent_altitude",
+    "tangent_latitude",
+    "tangent_longitude",
+    "observer_latitude",
+    "observer_longitude",
+    "observer_altitude",
+    "solar_zenith_angle",
+    "relative_solar_azimuth_angle",
+    "los_azimuth_angle",
+)
+
+
+def utc_datetime64(time) -> np.datetime64:
+    """``time`` as a timezone-naive UTC numpy datetime64[ns]."""
+    return utc_times(time)[0]

@@ -16,6 +16,12 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  # Keep the sasktran2 database (solar spectrum, Mie tables, HITRAN lines, the
+  # atmosphere curtain, ...) in a known place so it can be cached between runs.
+  # Bump the cache key version if the tests start needing new database files.
+  SASKTRAN2_DATABASE_ROOT: ${{ github.workspace }}/.sasktran2-database
+
 
 jobs:
   test-uv:
@@ -38,6 +44,38 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Cache sasktran2 database
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .sasktran2-database
+          key: sasktran2-database-${{ runner.os }}-v1
+
       - name: run pytests
         run: |
-          uv run --no-sources pytest
+          uv run --no-sources pytest -m "not slow"
+
+  # The end-to-end SHOW and ALI retrievals take several minutes, so they only run on one platform
+  test-slow:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          python-version: "3.12"
+
+      - name: Cache sasktran2 database
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .sasktran2-database
+          key: sasktran2-database-slow-${{ runner.os }}-v1
+
+      - name: run slow pytests
+        run: |
+          uv run --no-sources pytest -m slow
