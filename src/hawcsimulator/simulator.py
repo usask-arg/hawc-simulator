@@ -16,7 +16,7 @@ class Simulator:
         self._modules = [atmosphere, limb_observation]
 
     def _initialize_data(self) -> dict:
-        pass
+        return {}
 
     def run(
         self,
@@ -45,6 +45,7 @@ class Simulator:
 
         default_config.update(config)
 
+        user_input = set(input)
         input = {**self._initialize_data(), **input}
 
         if extra_modules is not None:
@@ -54,20 +55,35 @@ class Simulator:
 
         dr = (
             driver.Builder()
-            .with_config(
-                {}
-            )  # we don't have any configuration or invariant data for this example.
-            .with_modules(
-                *all_modules
-            )  # we need to tell hamilton where to load function definitions from
+            .with_modules(*all_modules)
             .with_config(default_config)
             .build()
         )
 
+        _check_inputs(dr, user_input)
+
         return dr.execute(outputs, inputs=input, overrides=overrides)
 
 
-if __name__ == "__main__":
-    test = Simulator()
+def _check_inputs(dr: driver.Driver, user_input: set[str]) -> None:
+    """Reject inputs the simulator would otherwise silently ignore.
 
-    res = test.run(input={"constituents": {"rayleigh": None}})
+    Hamilton ignores an input that names a computed node, and an input that no node
+    uses.
+    """
+    variables = dr.list_available_variables()
+    computed = {v.name for v in variables if not v.is_external_input}
+    external = {v.name for v in variables if v.is_external_input}
+
+    shadowed = sorted(user_input & computed)
+    if shadowed:
+        msg = (
+            f"{shadowed} are computed by this simulator, so passing them as input has "
+            "no effect; pass them in `overrides` to replace the computed values"
+        )
+        raise ValueError(msg)
+
+    unused = sorted(user_input - computed - external)
+    if unused:
+        msg = f"{unused} are not used by this simulator with this configuration"
+        raise ValueError(msg)

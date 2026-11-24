@@ -1,0 +1,53 @@
+# Representative phase 0 SHOW: a spatial heterodyne spectrometer imaging the limb onto
+# a Raptor Owl 1280 detector, described by its performance rather than its design.
+#
+# The coverage, sampling and spectral band are those of the phase 0 design, and the
+# spectral resolution, sampling and throughput give performance close to it. The
+# design's interferometer, optics and efficiencies are not described: the spectrum is
+# set by a Littrow wavenumber, a resolution and a number of interferogram samples, and
+# the throughput by one effective collecting area.
+name: SHOW-0-SHS-REP1
+description: >
+  Representative phase 0 SHOW spatial heterodyne spectrometer: 200 lines of sight from
+  0 to 45 km, 1.5 degree across-track field of view, 0.13 cm-1 resolution near
+  1370 nm, images averaging exposures of at most 92.5 ms.
+valid_from: "2026-11-24T00:00:00Z"
+
+orbit_altitude_m: 450000.0
+
+viewing:
+  tangent_altitude_range_m: [0.0, 45000.0]   # bottom and top of the field of view
+  num_rows: 200                              # lines of sight
+  across_track_fov_deg: 1.5
+
+spectral:
+  littrow_wavenumber_cminv: 7345.0           # above the band; the band is below it
+  resolution_cminv: 0.13                     # 1 / (2 x maximum optical path difference)
+  num_samples: 1024                          # interferogram samples, zero path difference at the centre
+  fringe_visibility: 0.8                     # interferometer modulation efficiency
+
+throughput:
+  # Collecting area times the optics, interferometer and detector efficiencies
+  effective_area_m2: 0.0083
+
+filter:
+  centre_wavelength_nm: 1369.7
+  fwhm_nm: 3.8
+  edge_width_nm: 2.5                         # each raised-cosine edge, from passband to stopband
+  peak_transmission: 0.75
+  stopband_db: 40.0
+
+detector:
+  model: raptor_owl_1280
+  gain_mode: low
+  coadd_exposures: true                      # each image averages exposures of at most 92.5 ms
+  read_noise_e: 160                          # per exposure; the datasheet's typical low-gain value
+  dead_time_s: 0.0167                        # assumed: one 60 Hz full-frame readout between exposures
+  rows_per_line_of_sight: 3.2                # detector rows binned into each line of sight
+  dark_offset_dn: 100.0                      # per physical pixel; placeholder
+  dark_offset_spread_dn: 5.0                 # per physical pixel; placeholder
+  # Dark current is the datasheet value at 15 C, the assumed operating temperature
+
+# L1B spectral samples: natural-grid wavenumbers where the filter transmits at least
+# this fraction of its peak
+min_sample_transmission: 0.01

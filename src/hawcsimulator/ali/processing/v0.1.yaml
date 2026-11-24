@@ -1,0 +1,13 @@
+# ALI processing v0.1: aliprocessing's L1A to L1B and two-stage L2 retrieval
+# defaults, at the aliprocessing version recorded in the outputs.
+version: v0.1
+description: aliprocessing's default processing.
+
+# Keyword arguments of aliprocessing.processing.l1a_to_l1b.process_l1a_to_l1b
+l1b: {}
+
+# Keyword arguments of aliprocessing.l1b.data.L1bImage.from_l1b
+l1b_image: {}
+
+# Overrides of aliprocessing's retrieval configuration (aliprocessing/l2/retrieval_config.yaml)
+l2: {}

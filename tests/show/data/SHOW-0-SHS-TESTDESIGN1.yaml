@@ -1,0 +1,43 @@
+# Synthetic test definition in the interferometer (design) form of SHOW
+# definitions, with made-up values.
+name: SHOW-0-SHS-TESTDESIGN1
+description: Synthetic test definition in the interferometer form; made-up values.
+valid_from: '2026-11-24T00:00:00Z'
+orbit_altitude_m: 450000.0
+viewing:
+  tangent_altitude_range_m:
+  - 0.0
+  - 45000.0
+  num_rows: 200
+  across_track_fov_deg: 1.5
+filter:
+  centre_wavelength_nm: 1369.7
+  fwhm_nm: 3.8
+  edge_width_nm: 2.5
+  peak_transmission: 0.75
+  stopband_db: 40.0
+detector:
+  model: raptor_owl_1280
+  gain_mode: low
+  coadd_exposures: true
+  read_noise_e: 160
+  dead_time_s: 0.0167
+  dark_offset_dn: 100.0
+  dark_offset_spread_dn: 5.0
+min_sample_transmission: 0.01
+aperture:
+  width_m: 0.2
+  height_m: 0.2
+interferometer:
+  littrow_wavenumber_cminv: 7345.0
+  opd_per_grating_cm: 2.5
+  grating_to_detector_magnification: 3.0
+  illuminated_grating_width_cm: 3.0
+  illuminated_grating_height_cm: 2.0
+  output_fraction: 0.5
+  fringe_visibility: 0.9
+  grating_tilt_rad: 6.0e-05
+efficiency:
+  front_optics: 0.8
+  back_optics: 0.8
+  quantum_efficiency: 0.8

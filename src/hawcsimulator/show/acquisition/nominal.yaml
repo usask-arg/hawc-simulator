@@ -1,0 +1,9 @@
+# SHOW nominal acquisition: each image integrates 2 s. When the instrument limits the
+# single exposure (detector.coadd_exposures), the image averages equal exposures that
+# add up to it.
+name: nominal
+description: One image integrating 2 s, averaged from exposures the detector allows.
+
+timing:
+  integration_time_s: 2.0          # total per image; "auto" fills the brightest pixel
+  full_well_fraction: 0.8          # for "auto": fraction of full well the brightest pixel reaches
