@@ -114,6 +114,7 @@ load.  See [the SHOW simulator](show/introduction.md) for the other options.
 
 ![show_sim](img/show_sim.png)
 
+(observation-geometry)=
 ## Observation geometry
 The lines of sight are a vertical scan from one observer, built as ECEF rays: one per viewing
 tangent altitude, in the vertical plane through the tangent point at `tangent_latitude`,
@@ -124,8 +125,33 @@ the instrument's orbit altitude.  `tangent_solar_zenith_angle` and `tangent_sola
 (relative to the line of sight, 0 is forward scatter) set the solar angles at every tangent point;
 without them the sun's position at `time` is used.
 
-## Using Orbital Parameters
-TBD: simulating observations along the HAWCsat orbit is being added in a separate change.
+## Simulating the HAWC orbit
+With `config={"observation_method": "orbit"}` the observation comes from an orbit instead.  The spacecraft is
+where the orbit puts it at `time`, and it takes a vertical limb image looking behind it.  The default orbit is
+the nominal HAWC orbit: sun-synchronous at 450 km, crossing the equator northbound at 13:30 local time, so it
+sees forward scatter in the northern hemisphere.  `time_at_tangent_latitude` finds when the tangent point
+reaches a latitude.
+
+```{code-block} python
+import numpy as np
+
+from hawcsimulator.ali import ALISimulator
+from hawcsimulator.geometry.orbit import NOMINAL_ORBIT, time_at_tangent_latitude
+
+# The first time on or after 21 June 2026 that the tangent point crosses 45 N
+# northbound, which is on the daylit side of the orbit
+time = time_at_tangent_latitude(NOMINAL_ORBIT, 45.0, np.datetime64("2026-06-21"))
+
+data = ALISimulator().run(
+        ["l2", "l2_truth"],
+        {"time": time},
+        config={"observation_method": "orbit", "atmosphere_method": "omps_calipso_era5"},
+)
+```
+See [the HAWC orbit](orbit/introduction.md) for the orbit and its viewing geometry, its
+[quickstart](orbit/quickstart.md) for choosing times, looking ahead and other orbits, and
+[sampling locations](orbit/sampling.md) for when and where the instruments measure over a day,
+without simulating any measurements.
 
 ## Manually specifying the atmospheric state
 The previous examples use the option `config={"atmosphere_method": "omps_calipso_era5"}` which loads in atmosphere data
@@ -191,6 +217,16 @@ show/introduction.md
 
 ali/quickstart.md
 ali/introduction.md
+```
+
+```{toctree}
+:maxdepth: 4
+:hidden:
+:caption: The HAWC Orbit
+
+orbit/quickstart.md
+orbit/introduction.md
+orbit/sampling.md
 ```
 
 ```{toctree}

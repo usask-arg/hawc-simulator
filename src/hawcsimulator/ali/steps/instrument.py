@@ -78,6 +78,46 @@ def observer_altitude(instrument_definition: dict) -> float:
     return float(instrument_definition["orbit_altitude_m"])
 
 
+def sampling_across_track_angles(instrument_definition: dict) -> np.ndarray:
+    """
+    Centres of the L1B across-track bins [degrees], where the ``sampling`` output
+    places ALI's profiles: each bin is a profile the L2 retrieval can retrieve.
+    """
+    l1b = instrument_definition["l1b"]
+    half_width = float(l1b["across_track_half_width_deg"])
+    edges = np.linspace(-half_width, half_width, int(l1b["num_across_track_bins"]) + 1)
+    return 0.5 * (edges[:-1] + edges[1:])
+
+
+def observation_duration(
+    instrument_definition: dict, acquisition_definition: dict
+) -> float | None:
+    """
+    How long one observation takes [s]: the frames of every observation set, as
+    ``l1a`` schedules them. None when the acquisition pattern's exposure is "auto",
+    which depends on the scene.
+    """
+    timing = acquisition_definition["timing"]
+    if timing["exposure"] == "auto":
+        return None
+    num_channels = len(instrument_definition["channels"]["centre_wavelengths_nm"])
+    total = np.broadcast_to(
+        np.asarray(timing["exposure"], dtype=float), (num_channels,)
+    )
+    exposure, coadds = np.array(
+        [split_exposure(t, instrument_definition) for t in total]
+    ).T
+    frame = coadds * (exposure + dead_time(instrument_definition)) + float(
+        timing.get("filter_change_s", 0.0)
+    )
+    per_set = frame.sum()
+    if timing.get("blank_between_sets", True):
+        # The blank frame takes the longest single exposure, as often as that
+        # channel's frame
+        per_set += frame[np.argmax(exposure)]
+    return float(int(timing["num_sets"]) * per_set)
+
+
 def ali_instrument(
     instrument_definition: dict, cal_db_cfg: dict | None = None
 ) -> SimpleInstrument:

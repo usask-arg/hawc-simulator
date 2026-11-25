@@ -8,6 +8,7 @@ import hawcsimulator.show.steps.fer as fer
 import hawcsimulator.show.steps.instrument as instrument
 import hawcsimulator.show.steps.l2 as l2
 import hawcsimulator.steps.program_of_record as program_of_record
+import hawcsimulator.steps.sampling as sampling
 import hawcsimulator.steps.truth as truth
 from hawcsimulator.show.steps.l2 import default_line_shape_cache
 from hawcsimulator.simulator import Simulator
@@ -43,6 +44,7 @@ class SHOWSimulator(Simulator):
         self._modules.append(instrument)
         self._modules.append(program_of_record)
         self._modules.append(truth)
+        self._modules.append(sampling)
         self._modules.append(l2)
 
     def _initialize_data(self) -> dict:

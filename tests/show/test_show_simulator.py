@@ -9,6 +9,7 @@ import pytest
 import xarray as xr
 from showlib.cal_db.ideal import ideal_calibration_database
 
+from hawcsimulator.geometry.orbit import NOMINAL_ORBIT, time_at_tangent_latitude
 from hawcsimulator.show import SHOWSimulator
 from hawcsimulator.show.steps.instrument import _radiance_by_row
 
@@ -153,16 +154,7 @@ def test_front_end_radiance_must_be_on_the_model_grid():
         _radiance_by_row(fer, cal_db)
 
 
-@pytest.mark.slow
-def test_noise_free_retrieval_returns_the_truth():
-    data = SHOWSimulator().run(
-        ["l2", "atmosphere"],
-        {
-            **FORCED,
-            "l1a_cfg": {"noise": False},
-        },
-    )
-
+def _assert_retrieves_the_truth(data):
     l2 = data["l2"].ds.isel(time=0)
     h2o = data["atmosphere"].constituents["h2o"]
     stratosphere = l2.sel(altitude=slice(17000, 30000))
@@ -179,6 +171,31 @@ def test_noise_free_retrieval_returns_the_truth():
         data["l2"].ds.attrs["hawcsimulator_instrument"]
         == SHOWSimulator.default_instrument
     )
+
+
+@pytest.mark.slow
+def test_noise_free_retrieval_returns_the_truth():
+    data = SHOWSimulator().run(
+        ["l2", "atmosphere"],
+        {
+            **FORCED,
+            "l1a_cfg": {"noise": False},
+        },
+    )
+
+    _assert_retrieves_the_truth(data)
+
+
+@pytest.mark.slow
+def test_noise_free_retrieval_on_the_orbit_returns_the_truth():
+    time = time_at_tangent_latitude(NOMINAL_ORBIT, 45.0, np.datetime64("2026-06-21"))
+    data = SHOWSimulator().run(
+        ["l2", "atmosphere"],
+        {"time": time, "l1a_cfg": {"noise": False}},
+        config={"observation_method": "orbit"},
+    )
+
+    _assert_retrieves_the_truth(data)
 
 
 def test_line_shapes_are_cached(tmp_path):

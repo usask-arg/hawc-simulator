@@ -8,6 +8,16 @@ from astropy.time import Time
 from hawcsimulator.geometry.utc import utc_times
 
 
+def sun_directions(time) -> np.ndarray:
+    """
+    Unit vectors from the Earth's centre towards the sun, (time, 3), in ECEF, from
+    astropy for all the times at once.
+    """
+    times = Time(utc_times(time), scale="utc")
+    sun = get_sun(times).transform_to(ITRS(obstime=times)).cartesian.xyz.to_value().T
+    return sun / np.linalg.norm(sun, axis=1, keepdims=True)
+
+
 class SunDirectionSolarHandler(sk.solar.SolarGeometryHandlerBase):
     """
     Solar angles from the direction of the sun seen from the Earth's centre.
@@ -27,9 +37,7 @@ class SunDirectionSolarHandler(sk.solar.SolarGeometryHandlerBase):
         """Unit vector from the Earth's centre towards the sun, in ECEF."""
         key = utc_times(time)[0]
         if key not in self._sun:
-            t = Time(key, scale="utc")
-            sun = get_sun(t).transform_to(ITRS(obstime=t)).cartesian.xyz.to_value()
-            self._sun[key] = sun / np.linalg.norm(sun)
+            self._sun[key] = sun_directions(key)[0]
         return self._sun[key]
 
     def target_solar_angles(

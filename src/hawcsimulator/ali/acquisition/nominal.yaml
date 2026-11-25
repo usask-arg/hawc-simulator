@@ -16,3 +16,7 @@ timing:
   fill: 0.6                   # for "auto": fraction of saturation the brightest pixel reaches
   filter_change_s: 0.1        # assumed time to move the filter wheel between frames
   blank_between_sets: true
+
+sampling:
+  interval_s: 20.0            # between the starts of consecutive observations; with automatic
+                              # exposure an observation takes about 10 to 18 s

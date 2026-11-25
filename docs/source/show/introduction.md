@@ -16,7 +16,7 @@ Each output below can be requested from `run`:
 
 | Output | Description |
 |---|---|
-| `atmosphere`, `observation` | The atmosphere and the limb viewing geometry, shared with the ALI simulator. The lines of sight are ECEF rays from one observer through the tangent point, see [the quickstart](../index.md) |
+| `atmosphere`, `observation` | The atmosphere and the limb viewing geometry, shared with the ALI simulator. The lines of sight are ECEF rays from one observer through the tangent point, see [the quickstart](../index.md), or from the orbit, see [The HAWC Orbit](../orbit/introduction.md) |
 | `instrument_definition`, `processing_definition`, `acquisition_definition` | The instrument definition, processing version and acquisition pattern, see [Instruments, Processing Versions and Acquisition Patterns](../instruments.md) |
 | `calibration_database` | The instrument model: the instrument definition as a showlib calibration database (built with `showlib.cal_db.ideal.ideal_calibration_database`), with one detector row per line of sight |
 | `front_end_radiance` | SASKTRAN2 radiance (two-stream multiple scattering, every CPU core) on the calibration database's model wavenumber grid. MIPAS CH4 is added to the atmosphere unless it already has `ch4`, since the retrieval models it |
@@ -25,6 +25,8 @@ Each output below can be requested from `run`:
 | `truth` | The true atmospheric state the radiance was calculated from, as an `xarray.Dataset` on the simulation's altitude grid: pressure, temperature, `<gas>_vmr` (including the CH4 added for the retrieval), aerosol extinction with its wavelength, surface albedo and tropopause altitude. `truth.to_netcdf(path)` saves it |
 | `l2_truth` | The truth on the L2's grid with the L2's names (`h2o_vmr`, and `aerosol_extinction` when the truth's aerosol is at the L2's wavelength), so `data["l2"].ds - data["l2_truth"]` is the retrieval error |
 | `program_of_record` | Pressure, temperature and tropopause altitude from the simulation atmosphere, and for now, when the atmosphere has aerosol, the true aerosol extinction at 1350 nm (`por_aerosol_wavelength_nm`), which the retrieval starts from and uses as its aerosol prior: showlib's pre-fit aerosol fails when the atmosphere's H2O differs from the climatology it holds H2O at. Set `por_aerosol_wavelength_nm` to `None` to use the pre-fit's aerosol |
+| `sampling` | When and where the instrument measures between the `sampling_start` and `sampling_end` inputs on the orbit, with no radiance calculated: an observation every `sampling.interval_s` of the acquisition pattern, kept when in daylight. See [Sampling Locations](../orbit/sampling.md) |
+| `observation_duration` | How long one image takes [s] with the acquisition pattern's timing, or None when its exposure is automatic |
 | `l2` | The L2 granule from `showlib.processing.l1b_to_l2.retrieve_l2`, a `showlib.l2.data.L2DataSet` checked against showlib's L2 schema. Its `ds` holds, along `time` and `altitude`, `h2o_vmr` with `h2o_vmr_noise_error`, `h2o_vmr_solution_error`, `h2o_vmr_prior` and `h2o_vmr_averaging_kernel`, and the retrieved aerosol |
 
 ## Options

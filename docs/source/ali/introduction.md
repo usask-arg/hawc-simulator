@@ -16,7 +16,7 @@ Each output below can be requested from `run`:
 
 | Output | Description |
 |---|---|
-| `atmosphere`, `observation` | The atmosphere and the limb viewing geometry, shared with the SHOW simulator. The lines of sight are ECEF rays from one observer through the tangent point, see [the quickstart](../index.md) |
+| `atmosphere`, `observation` | The atmosphere and the limb viewing geometry, shared with the SHOW simulator. The lines of sight are ECEF rays from one observer through the tangent point, see [the quickstart](../index.md), or from the orbit, see [The HAWC Orbit](../orbit/introduction.md) |
 | `instrument_definition`, `processing_definition`, `acquisition_definition` | The instrument definition, processing version and acquisition pattern, see [Instruments, Processing Versions and Acquisition Patterns](../instruments.md) |
 | `ali_instrument` | The instrument definition as an `aliprocessing.cal_db.SimpleInstrument`. For a definition with a per-pixel geometry its layout and field of view are averages, and `calibration_database` replaces the per-pixel geometry |
 | `calibration_database` | The instrument model from `aliprocessing.cal_db.simulated_cal_db`, with the definition's filter shapes and polarizers and the detector's quantum efficiency curve |
@@ -28,6 +28,8 @@ Each output below can be requested from `run`:
 | `truth` | The true atmospheric state the radiance was calculated from, as an `xarray.Dataset` on the simulation's altitude grid: pressure, temperature, `<gas>_vmr`, aerosol extinction with its wavelength and median radius, surface albedo and tropopause altitude. `truth.to_netcdf(path)` saves it |
 | `l2_truth` | The truth on the L2's grid with the L2's names (`aerosol_extinction` when the truth's aerosol is at the L2's wavelength, `aerosol_median_radius`, `surface_albedo`), so `data["l2"] - data["l2_truth"]` is the retrieval error |
 | `program_of_record` | Pressure, temperature and tropopause altitude from the simulation atmosphere |
+| `sampling` | When and where the instrument measures between the `sampling_start` and `sampling_end` inputs on the orbit, with no radiance calculated: an observation every `sampling.interval_s` of the acquisition pattern, kept when in daylight, with a profile in each L1B across-track bin (`sampling_across_track_angles`). See [Sampling Locations](../orbit/sampling.md) |
+| `observation_duration` | How long one observation set takes [s] with the acquisition pattern's timing, or None when its exposure is automatic |
 | `l2` | The L2 granule of the chosen observation sets and across-track bins (by default the first set's middle bin), in aliprocessing's L2 format and checked against its schema: `aerosol_extinction` and `aerosol_median_radius` with their noise and solution errors, priors and averaging kernels, `surface_albedo`, the cloud diagnostics and the retrieval's lower and upper altitude limits, along `observation_set`, `across_track` and `altitude`. Each image is retrieved with `aliprocessing.processing.l1b_to_l2.process_l1b_to_l2_image`, by default in two stages: the first fits from 5 to 40 km and screens for clouds, the second fits from above any cloud |
 
 Every pixel sees the front end radiance at its own tangent altitude, so the viewing tangent
