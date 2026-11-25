@@ -10,6 +10,7 @@ from hawcsimulator.geometry.orbit import (
     NOMINAL_ORBIT,
     CircularOrbit,
     limb_look_vectors,
+    tangent_point_geometry,
     time_at_tangent_latitude,
 )
 
@@ -186,3 +187,32 @@ def test_invalid_orbits():
         CircularOrbit(-1.0, 97.0, np.datetime64("2026-01-01"), 0.0)
     with pytest.raises(ValueError, match="inclination"):
         CircularOrbit(450e3, 190.0, np.datetime64("2026-01-01"), 0.0)
+
+
+def test_across_track_columns_straddle_the_boresight():
+    time = np.datetime64("2026-03-20T12:00:00")
+    boresight = tangent_point_geometry(NOMINAL_ORBIT, time).isel(time=0)
+    columns = tangent_point_geometry(
+        NOMINAL_ORBIT, time, across_track_angles=[-2.0, 0.0, 2.0]
+    ).isel(time=0)
+
+    # The middle column is the boresight's line of sight
+    for name in ("tangent_latitude", "tangent_longitude", "los_azimuth_angle"):
+        assert float(columns[name][1]) == pytest.approx(
+            float(boresight[name]), abs=1e-4
+        )
+
+    # The outer columns are 2 degrees either side, about 84 km at the tangent point
+    def location(i):
+        geodetic = sk.WGS84()
+        geodetic.from_lat_lon_alt(
+            float(columns["tangent_latitude"][i]),
+            float(columns["tangent_longitude"][i]),
+            25e3,
+        )
+        return np.asarray(geodetic.location)
+
+    left = np.linalg.norm(location(0) - location(1))
+    right = np.linalg.norm(location(2) - location(1))
+    assert left == pytest.approx(right, rel=0.01)
+    assert left == pytest.approx(2400e3 * np.tan(np.deg2rad(2.0)), rel=0.05)

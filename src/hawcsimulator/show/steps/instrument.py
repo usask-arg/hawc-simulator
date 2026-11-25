@@ -11,6 +11,7 @@ from skretrieval.core.sasktranformat import SASKTRANRadiance
 from hawcsimulator import definitions
 from hawcsimulator.datastructures.viewinggeo import ObservationContainer
 from hawcsimulator.definitions import (
+    dead_time,
     load_instrument,
     load_processing,
     merge,
@@ -73,6 +74,21 @@ def provenance(
 def observer_altitude(instrument_definition: dict) -> float:
     """Orbit altitude of the instrument definition [m]."""
     return float(instrument_definition["orbit_altitude_m"])
+
+
+def observation_duration(
+    instrument_definition: dict, acquisition_definition: dict
+) -> float | None:
+    """
+    How long one image takes [s]: its exposures, each followed by the detector's dead
+    time. None when the acquisition pattern's integration is "auto", which depends on
+    the scene.
+    """
+    total = acquisition_definition["timing"]["integration_time_s"]
+    if total == "auto":
+        return None
+    exposure, num_exposures = split_exposure(float(total), instrument_definition)
+    return num_exposures * (exposure + dead_time(instrument_definition))
 
 
 def viewing_tangent_altitudes(instrument_definition: dict) -> np.ndarray:

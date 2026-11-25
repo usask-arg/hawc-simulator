@@ -47,6 +47,8 @@ templates_path = ['_templates']
 exclude_patterns = []
 
 autodoc_docstring_signature = True
+# Show default values as written, e.g. NOMINAL_ORBIT rather than its repr
+autodoc_preserve_defaults = True
 autodoc_default_options = {
     'members': True,
     'show-inheritance': True,

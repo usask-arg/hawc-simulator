@@ -7,6 +7,7 @@ import hawcsimulator.ali.steps.fer as fer
 import hawcsimulator.ali.steps.instrument as instrument
 import hawcsimulator.ali.steps.l2 as l2
 import hawcsimulator.steps.program_of_record as program_of_record
+import hawcsimulator.steps.sampling as sampling
 import hawcsimulator.steps.truth as truth
 from hawcsimulator.simulator import Simulator
 
@@ -42,6 +43,7 @@ class ALISimulator(Simulator):
         self._modules.append(instrument)
         self._modules.append(program_of_record)
         self._modules.append(truth)
+        self._modules.append(sampling)
         self._modules.append(l2)
 
     def _initialize_data(self) -> dict:

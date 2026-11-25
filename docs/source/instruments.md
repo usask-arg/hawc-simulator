@@ -97,8 +97,8 @@ adjusts one for a run, for example `{"timing": {"num_sets": 3}}`.
 
 | Instrument | Pattern | Description |
 |---|---|---|
-| SHOW | `nominal` (default) | each image integrates 2 s (`timing.integration_time_s`; `"auto"` fills the brightest pixel to `timing.full_well_fraction` of full well) |
-| ALI | `nominal` (default) | limb stare with the boresight at 25 km; one observation set through every channel, each frame exposed to fill the brightest pixel to 60% of saturation, then a blank frame |
+| SHOW | `nominal` (default) | each image integrates 2 s (`timing.integration_time_s`; `"auto"` fills the brightest pixel to `timing.full_well_fraction` of full well); images every 2.4 s, back to back (`sampling.interval_s`) |
+| ALI | `nominal` (default) | limb stare with the boresight at 25 km; one observation set through every channel, each frame exposed to fill the brightest pixel to 60% of saturation, then a blank frame; observations every 20 s (`sampling.interval_s`) |
 
 An ALI pattern has two sections:
 - `pointing`: `boresight_tangent_altitude_m` and `boresight_roll_deg`, the same for every
@@ -110,6 +110,10 @@ An ALI pattern has two sections:
 Integrations longer than the detector's longest single exposure are averaged from equal
 exposures.  Each frame takes its exposures plus the instrument's dead time after each, and the
 next frame starts `filter_change_s` later, which sets the L1A frame times.
+
+Both instruments' patterns have a `sampling` section: `interval_s`, the time between the starts of
+consecutive observations, which sets the [sampling locations](orbit/sampling.md).  When the timing
+is fixed, an interval shorter than one observation (the `observation_duration` output) is an error.
 
 (internal-definitions)=
 ## Internal definitions

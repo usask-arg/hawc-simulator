@@ -22,6 +22,19 @@
     hawcsimulator.geometry.orbit.OrbitState
     hawcsimulator.geometry.orbit.limb_look_vectors
     hawcsimulator.geometry.orbit.time_at_tangent_latitude
+    hawcsimulator.geometry.orbit.tangent_point_geometry
+    hawcsimulator.geometry.solar.sun_directions
+```
+
+# Sampling Locations
+```{eval-rst}
+.. autosummary::
+    :toctree: generated/
+
+    hawcsimulator.steps.sampling.sampling
+    hawcsimulator.ali.steps.instrument.observation_duration
+    hawcsimulator.ali.steps.instrument.sampling_across_track_angles
+    hawcsimulator.show.steps.instrument.observation_duration
 ```
 
 # Atmosphere Construction

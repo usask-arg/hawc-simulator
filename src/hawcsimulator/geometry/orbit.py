@@ -18,8 +18,10 @@ from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 import sasktran2 as sk
+import xarray as xr
 from scipy.optimize import brentq
 
+from hawcsimulator.geometry.solar import sun_directions
 from hawcsimulator.geometry.utc import utc_times
 
 EARTH_GM = 3.986004418e14  # [m^3 s^-2]
@@ -247,6 +249,182 @@ def limb_look_vectors(
     )
 
 
+def tangent_point_geometry(
+    orbit: CircularOrbit,
+    time,
+    look_azimuth: float = 180.0,
+    tangent_altitude: float = 25000.0,
+    across_track_angles: np.ndarray | None = None,
+    boresight_tangent_altitude: float | None = None,
+    roll: float = 0.0,
+) -> xr.Dataset:
+    """
+    The tangent point at ``tangent_altitude`` at each of ``time``, and the solar
+    geometry there.
+
+    Without ``across_track_angles`` these are the line of sight and solar angles an
+    orbit observation (hawcsimulator.steps.limb_observation.observation__orbit) has
+    at that tangent altitude, for many times at once and without any radiance. With
+    them, they are an imager's columns at those across-track field angles, as
+    aliprocessing.geometry.InstrumentFrame defines them: the boresight looks at
+    ``boresight_tangent_altitude`` in the vertical plane at ``look_azimuth``, the
+    instrument's up axis is the local vertical at the spacecraft perpendicular to
+    the boresight, rolled clockwise by ``roll`` looking along the boresight, and each
+    column's line of sight reaches ``tangent_altitude``.
+
+    Parameters
+    ----------
+    orbit : CircularOrbit
+    time
+        Times; without a timezone they are UTC
+    look_azimuth : float, optional
+        As in limb_look_vectors, by default 180
+    tangent_altitude : float, optional
+        Tangent altitude of the lines of sight [m], by default 25000
+    across_track_angles : np.ndarray | None, optional
+        Across-track field angles of the columns [degrees], positive to the right
+        looking along the boresight, by default None for the boresight's plane only
+    boresight_tangent_altitude : float | None, optional
+        Tangent altitude of the boresight [m], by default ``tangent_altitude``
+    roll : float, optional
+        Roll of the instrument about the boresight [degrees], by default 0
+
+    Returns
+    -------
+    xr.Dataset
+        Along ``time``: spacecraft_latitude, spacecraft_longitude,
+        spacecraft_altitude [m] and ascending (the boresight's tangent point is
+        moving north). Along ``time``, and ``across_track`` (coordinate
+        ``across_track_angle``) when given: tangent_latitude [degrees_north],
+        tangent_longitude [degrees_east, -180 to 180), solar_zenith_angle [degrees],
+        relative_solar_azimuth_angle [degrees, -180 to 180, 0 is forward scatter],
+        scattering_angle [degrees, 0 is forward scatter, as aliprocessing's L2
+        reports it] and los_azimuth_angle [degrees clockwise from north at the
+        tangent point, 0 to 360)
+    """
+    state = orbit.state(time)
+    sun = sun_directions(state.time)
+    num_times = len(state.time)
+    if boresight_tangent_altitude is None:
+        boresight_tangent_altitude = tangent_altitude
+    angles = (
+        None
+        if across_track_angles is None
+        else np.atleast_1d(np.asarray(across_track_angles, dtype=float))
+    )
+    shape = (num_times,) if angles is None else (num_times, len(angles))
+    point = {
+        name: np.empty(shape)
+        for name in (
+            "tangent_latitude",
+            "tangent_longitude",
+            "solar_zenith_angle",
+            "solar_azimuth_angle",
+            "los_azimuth_angle",
+        )
+    }
+    spacecraft = {
+        name: np.empty(num_times)
+        for name in (
+            "spacecraft_latitude",
+            "spacecraft_longitude",
+            "spacecraft_altitude",
+        )
+    }
+    ascending = np.empty(num_times, dtype=bool)
+    geodetic = sk.WGS84()
+    for i, (observer, along_track) in enumerate(
+        zip(state.position, state.along_track, strict=True)
+    ):
+        # Leaves the geodetic at the spacecraft
+        horizontal = _look_direction(geodetic, observer, along_track, look_azimuth)
+        spacecraft["spacecraft_latitude"][i] = geodetic.latitude
+        spacecraft["spacecraft_longitude"][i] = geodetic.longitude
+        spacecraft["spacecraft_altitude"][i] = geodetic.altitude
+        vertical = np.asarray(geodetic.local_up)
+
+        # Leaves the geodetic at the boresight's tangent point
+        boresight = np.asarray(
+            geodetic.from_tangent_altitude(
+                boresight_tangent_altitude, observer, horizontal
+            )
+        )
+        # The tangent point moves with the orbit: along the spacecraft's direction
+        # of motion, less its part along the tangent point's own radius
+        radial = np.asarray(geodetic.location)
+        radial = radial / np.linalg.norm(radial)
+        ascending[i] = (along_track - (along_track @ radial) * radial)[2] > 0
+
+        if angles is None:
+            look = (
+                boresight
+                if boresight_tangent_altitude == tangent_altitude
+                else np.asarray(
+                    geodetic.from_tangent_altitude(
+                        tangent_altitude, observer, horizontal
+                    )
+                )
+            )
+            looks = [(i, look)]
+        else:
+            looks = [
+                ((i, j), look)
+                for j, look in enumerate(
+                    _column_looks(
+                        observer,
+                        boresight,
+                        vertical,
+                        angles,
+                        roll,
+                        tangent_altitude,
+                    )
+                )
+            ]
+        for index, look in looks:
+            geodetic.from_tangent_point(observer, look)
+            up = np.asarray(geodetic.local_up)
+            north = -np.asarray(geodetic.local_south)
+            east = -np.asarray(geodetic.local_west)
+            point["tangent_latitude"][index] = geodetic.latitude
+            point["tangent_longitude"][index] = geodetic.longitude
+            point["solar_zenith_angle"][index] = np.degrees(
+                np.arccos(np.clip(up @ sun[i], -1.0, 1.0))
+            )
+            point["solar_azimuth_angle"][index] = np.degrees(
+                np.arctan2(east @ sun[i], north @ sun[i])
+            )
+            point["los_azimuth_angle"][index] = np.degrees(
+                np.arctan2(look @ east, look @ north)
+            )
+
+    relative_azimuth = (
+        point.pop("solar_azimuth_angle") - point["los_azimuth_angle"] + 180.0
+    ) % 360.0 - 180.0
+    zenith = np.deg2rad(point["solar_zenith_angle"])
+    point["relative_solar_azimuth_angle"] = relative_azimuth
+    point["scattering_angle"] = np.degrees(
+        np.arccos(np.sin(zenith) * np.cos(np.deg2rad(relative_azimuth)))
+    )
+    point["tangent_longitude"] = (point["tangent_longitude"] + 180.0) % 360.0 - 180.0
+    point["los_azimuth_angle"] = point["los_azimuth_angle"] % 360.0
+    spacecraft["spacecraft_longitude"] = (
+        spacecraft["spacecraft_longitude"] + 180.0
+    ) % 360.0 - 180.0
+
+    dims = ["time"] if angles is None else ["time", "across_track"]
+    coords = {"time": state.time}
+    if angles is not None:
+        coords["across_track_angle"] = (["across_track"], angles)
+    return xr.Dataset(
+        {
+            **{name: (dims, values) for name, values in point.items()},
+            **{name: (["time"], values) for name, values in spacecraft.items()},
+            "ascending": (["time"], ascending),
+        },
+        coords=coords,
+    )
+
+
 def time_at_tangent_latitude(
     orbit: CircularOrbit,
     latitude: float,
@@ -267,8 +445,9 @@ def time_at_tangent_latitude(
         Time to start looking from
     ascending : bool, optional
         Find the crossing with the tangent point moving north (True) or south
-        (False). For the nominal orbit, northbound is the daylit half of the orbit.
-        By default True
+        (False). On the nominal orbit the northbound crossing is in daylight, and
+        the southbound one is dark except near the summer pole, where both are in
+        daylight. By default True
     look_azimuth : float, optional
         As in limb_look_vectors, by default 180
     tangent_altitude : float, optional
@@ -325,6 +504,49 @@ def _look_direction(
     right = np.cross(forward, up)
     azimuth = np.deg2rad(look_azimuth)
     return np.cos(azimuth) * forward + np.sin(azimuth) * right
+
+
+def _column_looks(
+    observer: np.ndarray,
+    boresight: np.ndarray,
+    vertical: np.ndarray,
+    angles: np.ndarray,
+    roll: float,
+    tangent_altitude: float,
+) -> list[np.ndarray]:
+    """
+    Unit look vectors of an imager's columns at across-track field ``angles``
+    [degrees], each reaching ``tangent_altitude``.
+
+    As aliprocessing.geometry.InstrumentFrame: a pixel looks along
+    normalize(boresight + tan(alpha) right + tan(beta) up), with up the local
+    ``vertical`` at the spacecraft perpendicular to the boresight, rolled by
+    ``roll`` [degrees] clockwise looking along the boresight.
+    """
+    up = vertical - (vertical @ boresight) * boresight
+    up = up / np.linalg.norm(up)
+    right = np.cross(boresight, up)
+    roll_rad = np.deg2rad(roll)
+    up, right = (
+        np.cos(roll_rad) * up + np.sin(roll_rad) * right,
+        np.cos(roll_rad) * right - np.sin(roll_rad) * up,
+    )
+
+    geodetic = sk.WGS84()
+    looks = []
+    for angle in angles:
+        column = boresight + np.tan(np.deg2rad(angle)) * right
+
+        def offset(tan_elevation, column=column):
+            look = column + tan_elevation * up
+            geodetic.from_tangent_point(observer, look / np.linalg.norm(look))
+            return geodetic.altitude - tangent_altitude
+
+        # Tangent altitude rises with elevation; 0.1 is about 240 km either way
+        tan_elevation = brentq(offset, -0.1, 0.1, xtol=1e-10)
+        look = column + tan_elevation * up
+        looks.append(look / np.linalg.norm(look))
+    return looks
 
 
 def _utc_hours(times: np.ndarray) -> np.ndarray:

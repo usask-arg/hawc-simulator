@@ -7,3 +7,7 @@ description: One image integrating 2 s, averaged from exposures the detector all
 timing:
   integration_time_s: 2.0          # total per image; "auto" fills the brightest pixel
   full_well_fraction: 0.8          # for "auto": fraction of full well the brightest pixel reaches
+
+sampling:
+  interval_s: 2.4                  # between the starts of consecutive images: back to back, as
+                                   # each image takes 2.37 s (22 exposures and their dead time)

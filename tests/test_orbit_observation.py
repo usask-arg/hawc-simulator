@@ -153,3 +153,28 @@ def test_night_side_observation_raises():
             time=time,
             sample_wavelengths=np.array([745.0]),
         )
+
+
+@pytest.mark.parametrize(
+    ("latitude", "date", "forward"),
+    [(75.0, "2026-06-21", True), (-75.0, "2026-12-21", False)],
+)
+def test_summer_pole_is_daylit_southbound_too(latitude, date, forward):
+    # Past the most northerly or southerly point the tangent point stays in the
+    # midnight sun, and the scattering still depends on the hemisphere
+    time = time_at_tangent_latitude(
+        NOMINAL_ORBIT, latitude, np.datetime64(date), ascending=False
+    )
+
+    observation = observation__orbit(
+        viewing_tangent_altitudes=TANGENT_ALTITUDES,
+        time=time,
+        sample_wavelengths=np.array([745.0]),
+    )
+
+    geometry = observation_geometry(observation.observation)
+    relative_azimuth = np.abs(geometry["relative_solar_azimuth_angle"])
+    if forward:
+        assert np.all(relative_azimuth < 60.0)
+    else:
+        assert np.all(relative_azimuth > 120.0)
